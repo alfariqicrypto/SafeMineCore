@@ -38,23 +38,23 @@ Next, follow the instructions in [build-generic](build-generic.md)
 Running
 -------
 
-SafeMine Core is now available at `./src/safemined`
+Safeminemore Core is now available at `./src/safeminemored`
 
 Before running, it's recommended you create an RPC configuration file.
 
-    echo -e "rpcuser=safeminerpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/SafeMine/safemine.conf"
+    echo -e "rpcuser=safeminemorerpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/SafeminemoreCore/safeminemore.conf"
 
-    chmod 600 "/Users/${USER}/Library/Application Support/SafeMine/safemine.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/SafeminemoreCore/safeminemore.conf"
 
-The first time you run safemined, it will start downloading the blockchain. This process could take several hours.
+The first time you run safeminemored, it will start downloading the blockchain. This process could take several hours.
 
 You can monitor the download process by looking at the debug.log file:
 
-    tail -f $HOME/Library/Application\ Support/SafeMine/debug.log
+    tail -f $HOME/Library/Application\ Support/SafeminemoreCore/debug.log
 
 Other commands:
 -------
 
-    ./src/safemined -daemon # Starts the safemine daemon.
-    ./src/safemine-cli --help # Outputs a list of command-line options.
-    ./src/safemine-cli help # Outputs a list of RPC commands when the daemon is running.
+    ./src/safeminemored -daemon # Starts the safeminemore daemon.
+    ./src/safeminemore-cli --help # Outputs a list of command-line options.
+    ./src/safeminemore-cli help # Outputs a list of RPC commands when the daemon is running.

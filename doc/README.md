@@ -1,39 +1,39 @@
-SafeMine Core
+Safeminemore Core
 ==========
 
-This is the official reference wallet for SafeMine digital currency and comprises the backbone of the SafeMine peer-to-peer network. You can [download SafeMine Core](https://www.safemine.org/downloads/) or [build it yourself](#building) using the guides below.
+This is the official reference wallet for Safeminemore digital currency and comprises the backbone of the Safeminemore peer-to-peer network. You can [download Safeminemore Core](https://www.safeminemore.org/downloads/) or [build it yourself](#building) using the guides below.
 
 Running
 ---------------------
-The following are some helpful notes on how to run SafeMine on your native platform.
+The following are some helpful notes on how to run Safeminemore on your native platform.
 
 ### Unix
 
 Unpack the files into a directory and run:
 
-- `bin/safemine-qt` (GUI) or
-- `bin/safemined` (headless)
+- `bin/safeminemore-qt` (GUI) or
+- `bin/safeminemored` (headless)
 
 ### Windows
 
-Unpack the files into a directory, and then run safemine-qt.exe.
+Unpack the files into a directory, and then run safeminemore-qt.exe.
 
 ### OS X
 
-Drag SafeMine-Qt to your applications folder, and then run SafeMine-Qt.
+Drag Safeminemore-Qt to your applications folder, and then run Safeminemore-Qt.
 
 ### Need Help?
 
-* See the [SafeMine documentation](https://docs.safemine.org)
+* See the [Safeminemore documentation](https://docs.safeminemore.org)
 for help and more information.
-* See the [SafeMine Developer Documentation](https://safemine-docs.github.io/) 
+* See the [Safeminemore Developer Documentation](https://safeminemore-docs.github.io/) 
 for technical specifications and implementation details.
-* Ask for help on [SafeMine Nation Discord](http://safeminechat.org)
-* Ask for help on the [SafeMine Forum](https://safemine.org/forum)
+* Ask for help on [Safeminemore Nation Discord](http://safeminemorechat.org)
+* Ask for help on the [Safeminemore Forum](https://safeminemore.org/forum)
 
 Building
 ---------------------
-The following are developer notes on how to build SafeMine Core on your native platform. They are not complete guides, but include notes on the necessary libraries, compile flags, etc.
+The following are developer notes on how to build Safeminemore Core on your native platform. They are not complete guides, but include notes on the necessary libraries, compile flags, etc.
 
 - [OS X Build Notes](build-osx.md)
 - [Unix Build Notes](build-unix.md)
@@ -43,7 +43,7 @@ The following are developer notes on how to build SafeMine Core on your native p
 
 Development
 ---------------------
-The SafeMine Core repo's [root README](/README.md) contains relevant information on the development process and automated testing.
+The Safeminemore Core repo's [root README](/README.md) contains relevant information on the development process and automated testing.
 
 - [Developer Notes](developer-notes.md)
 - [Release Notes](release-notes.md)
@@ -59,8 +59,8 @@ The SafeMine Core repo's [root README](/README.md) contains relevant information
 - [Benchmarking](benchmarking.md)
 
 ### Resources
-* Discuss on the [SafeMine Forum](https://safemine.org/forum), in the Development & Technical Discussion board.
-* Discuss on [SafeMine Nation Discord](http://safeminechat.org)
+* Discuss on the [Safeminemore Forum](https://safeminemore.org/forum), in the Development & Technical Discussion board.
+* Discuss on [Safeminemore Nation Discord](http://safeminemorechat.org)
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)

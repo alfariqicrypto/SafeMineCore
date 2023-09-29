@@ -1,22 +1,22 @@
 GENERIC BUILD NOTES
 ====================
-Some notes on how to build SafeMine Core based on the [depends](../depends/README.md) build system.
+Some notes on how to build Safeminemore Core based on the [depends](../depends/README.md) build system.
 
 Note on old build instructions
 ------------------------------
-In the past, the build documentation contained instructions on how to build SafeMine with system-wide installed dependencies
+In the past, the build documentation contained instructions on how to build Safeminemore with system-wide installed dependencies
 like BerkeleyDB 4.8, boost and Qt. Building this way is considered deprecated and only building with the `depends` prefix
 is supported today.
 
 Required build tools and environment
 ------------------------------------
-Building the dependencies and SafeMine Core requires some essential build tools to be installed before. Please see
+Building the dependencies and Safeminemore Core requires some essential build tools to be installed before. Please see
 [build-unix](build-unix.md), [build-osx](build-osx.md) and [build-windows](build-windows.md) for details.
 
 Building dependencies
 ---------------------
-SafeMine inherited the `depends` folder from Bitcoin, which contains all dependencies required to build SafeMine. These
-dependencies must be built before SafeMine can actually be built. To do so, perform the following:
+Safeminemore inherited the `depends` folder from Bitcoin, which contains all dependencies required to build Safeminemore. These
+dependencies must be built before Safeminemore can actually be built. To do so, perform the following:
 
 ```bash
 $ cd depends
@@ -24,25 +24,27 @@ $ make -j4 # Choose a good -j value, depending on the number of CPU cores availa
 $ cd ..
 ```
 
-This will download and build all dependencies required to build SafeMine Core. Caching of build results will ensure that only
+This will download and build all dependencies required to build Safeminemore Core. Caching of build results will ensure that only
 the packages are rebuilt which have changed since the last depends build.
 
 It is required to re-run the above commands from time to time when dependencies have been updated or added. If this is
-not done, build failures might occur when building SafeMine.
+not done, build failures might occur when building Safeminemore.
 
 Please read the [depends](../depends/README.md) documentation for more details on supported hosts and configuration
 options. If no host is specified (as in the above example) when calling `make`, the depends system will default to your
 local host system. 
 
-Building SafeMine Core
+Building Safeminemore Core
 ---------------------
 
 ```bash
 $ ./autogen.sh
-$ ./configure --prefix=`pwd`/depends/<host>
+$ ./configure --prefix=`pwd`/depends/x86_64-pc-linux-gnu --disable-bench --disable-tests --disable-gui-tests --disable-zmq --with-miniupnpc --with-gui=no
 $ make
 $ make install # optional
 ```
+
+$ ./configure --prefix=`pwd`/depends/'< host >'
 
 Please replace `<host>` with your local system's `host-platform-triplet`. The following triplets are usually valid:
 - `i686-pc-linux-gnu` for Linux32
@@ -61,7 +63,7 @@ If you want to build for the same host but different distro, add `--enable-glibc
 
 ccache
 ------
-`./configure` of SafeMine Core will autodetect the presence of ccache and enable use of it. To disable ccache, use
+`./configure` of Safeminemore Core will autodetect the presence of ccache and enable use of it. To disable ccache, use
 `./configure --prefix=<prefix> --disable-ccache`. When installed and enabled, [ccache](https://ccache.samba.org/) will
 cache build results on source->object level.
 

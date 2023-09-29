@@ -1,6 +1,7 @@
-# TOR SUPPORT IN SMX CORE
+# TOR SUPPORT IN SAFEMINEMORE CORE
+=======================
 
-It is possible to run SafeMine Core as a Tor hidden service, and connect to such services.
+It is possible to run Safeminemore Core as a Tor hidden service, and connect to such services.
 
 The following directions assume you have a Tor proxy running on port 9050. Many
 distributions default to having a SOCKS proxy listening on port 9050, but others
@@ -9,9 +10,10 @@ See [Tor Project FAQ:TBBSocksPort](https://www.torproject.org/docs/faq.html.en#T
 for how to properly configure Tor.
 
 
-## 1. Run SafeMine Core behind a Tor proxy
+## 1. Run Safeminemore Core behind a Tor proxy
+----------------------------------
 
-The first step is running SafeMine Core behind a Tor proxy. This will already make all
+The first step is running Safeminemore Core behind a Tor proxy. This will already make all
 outgoing connections be anonymized, but more is possible.
 
 	-proxy=ip:port  Set the proxy server. If SOCKS5 is selected (default), this proxy
@@ -35,31 +37,32 @@ outgoing connections be anonymized, but more is possible.
 An example how to start the client if the Tor proxy is running on local host on
 port 9050 and only allows .onion nodes to connect:
 
-	./safemined -onion=127.0.0.1:9050 -onlynet=tor -listen=0 -addnode=ssapp53tmftyjmjb.onion
+	./safeminemored -onion=127.0.0.1:9050 -onlynet=tor -listen=0 -addnode=ssapp53tmftyjmjb.onion
 
 In a typical situation, this suffices to run behind a Tor proxy:
 
-	./safemined -proxy=127.0.0.1:9050
+	./safeminemored -proxy=127.0.0.1:9050
 
 
-## 2. Run a SafeMine Core hidden server
+## 2. Run a Safeminemore Core hidden server
+-------------------------------
 
 If you configure your Tor system accordingly, it is possible to make your node also
 reachable from the Tor network. Add these lines to your /etc/tor/torrc (or equivalent
 config file): *Needed for Tor version 0.2.7.0 and older versions of Tor only. For newer
 versions of Tor see [Section 4](#4-automatically-listen-on-tor).*
 
-	HiddenServiceDir /var/lib/tor/safemine-service/
-	HiddenServicePort 38458 127.0.0.1:38458
-	HiddenServicePort 48458 127.0.0.1:48458
+	HiddenServiceDir /var/lib/tor/safeminemorecore-service/
+	HiddenServicePort 9999 127.0.0.1:9999
+	HiddenServicePort 19999 127.0.0.1:19999
 
 The directory can be different of course, but (both) port numbers should be equal to
-your safemined's P2P listen port (38458 by default).
+your safeminemored's P2P listen port (9999 by default).
 
-	-externalip=X   You can tell SafeMine Core about its publicly reachable address using
+	-externalip=X   You can tell Safeminemore Core about its publicly reachable address using
 	                this option, and this can be a .onion address. Given the above
 	                configuration, you can find your onion address in
-	                /var/lib/tor/safemine-service/hostname. Onion addresses are given
+	                /var/lib/tor/safeminemorecore-service/hostname. Onion addresses are given
 	                preference for your node to advertise itself with, for connections
 	                coming from unroutable addresses (such as 127.0.0.1, where the
 	                Tor proxy typically runs).
@@ -76,30 +79,31 @@ your safemined's P2P listen port (38458 by default).
 
 In a typical situation, where you're only reachable via Tor, this should suffice:
 
-	./safemined -proxy=127.0.0.1:9050 -externalip=ssapp53tmftyjmjb.onion -listen
+	./safeminemored -proxy=127.0.0.1:9050 -externalip=ssapp53tmftyjmjb.onion -listen
 
 (obviously, replace the Onion address with your own). It should be noted that you still
 listen on all devices and another node could establish a clearnet connection, when knowing
 your address. To mitigate this, additionally bind the address of your Tor proxy:
 
-	./safemined ... -bind=127.0.0.1
+	./safeminemored ... -bind=127.0.0.1
 
 If you don't care too much about hiding your node, and want to be reachable on IPv4
 as well, use `discover` instead:
 
-	./safemined ... -discover
+	./safeminemored ... -discover
 
-and open port 38458 on your firewall (or use -upnp).
+and open port 9999 on your firewall (or use -upnp).
 
 If you only want to use Tor to reach onion addresses, but not use it as a proxy
 for normal IPv4/IPv6 communication, use:
 
-	./safemined -onion=127.0.0.1:9050 -externalip=ssapp53tmftyjmjb.onion -discover
+	./safeminemored -onion=127.0.0.1:9050 -externalip=ssapp53tmftyjmjb.onion -discover
 
 
-## 3. List of known SafeMine Core Tor relays
+## 3. List of known Safeminemore Core Tor relays
+------------------------------------
 
-Note: All these nodes are hosted by masternodehosting.com
+Note: All these nodes are hosted by smartnodehosting.com
 
 * l7oq3v7ujau5tfrw.onion
 * vsmegqxisccimsir.onion
@@ -117,31 +121,31 @@ Note: All these nodes are hosted by masternodehosting.com
 
 Starting with Tor version 0.2.7.1 it is possible, through Tor's control socket
 API, to create and destroy 'ephemeral' hidden services programmatically.
-SafeMine Core has been updated to make use of this.
+Safeminemore Core has been updated to make use of this.
 
 This means that if Tor is running (and proper authentication has been configured),
-SafeMine Core automatically creates a hidden service to listen on. This will positively 
+Safeminemore Core automatically creates a hidden service to listen on. This will positively
 affect the number of available .onion nodes.
 
-This new feature is enabled by default if SafeMine Core is listening (`-listen`), and
+This new feature is enabled by default if Safeminemore Core is listening (`-listen`), and
 requires a Tor connection to work. It can be explicitly disabled with `-listenonion=0`
 and, if not disabled, configured using the `-torcontrol` and `-torpassword` settings.
 To show verbose debugging information, pass `-debug=tor`.
 
-Connecting to Tor's control socket API requires one of two authentication methods to be 
-configured. For cookie authentication the user running safemined must have write access 
-to the `CookieAuthFile` specified in Tor configuration. In some cases this is 
-preconfigured and the creation of a hidden service is automatic. If permission problems 
-are seen with `-debug=tor` they can be resolved by adding both the user running tor and 
-the user running safemined to the same group and setting permissions appropriately. On 
-Debian-based systems the user running safemined can be added to the debian-tor group, 
-which has the appropriate permissions. An alternative authentication method is the use 
-of the `-torpassword` flag and a `hash-password` which can be enabled and specified in 
+Connecting to Tor's control socket API requires one of two authentication methods to be
+configured. For cookie authentication the user running safeminemored must have write access
+to the `CookieAuthFile` specified in Tor configuration. In some cases this is
+preconfigured and the creation of a hidden service is automatic. If permission problems
+are seen with `-debug=tor` they can be resolved by adding both the user running tor and
+the user running safeminemored to the same group and setting permissions appropriately. On
+Debian-based systems the user running safeminemored can be added to the debian-tor group,
+which has the appropriate permissions. An alternative authentication method is the use
+of the `-torpassword` flag and a `hash-password` which can be enabled and specified in
 Tor configuration.
 
 ## 5. Privacy recommendations
 
-- Do not add anything but SafeMine Core ports to the hidden service created in section 2.
+- Do not add anything but Safeminemore Core ports to the hidden service created in section 2.
   If you run a web service too, create a new hidden service for that.
   Otherwise it is trivial to link them, which may reduce privacy. Hidden
   services created automatically (as in section 3) always have only one port
