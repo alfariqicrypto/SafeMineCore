@@ -17,9 +17,9 @@ RUN pip3 install pyzmq # really needed?
 RUN pip3 install jinja2
 RUN pip3 install flake8
 
-# safemine_hash
-RUN git clone https://github.com/safeminepay/safemine_hash
-RUN cd safemine_hash && python3 setup.py install
+# safeminemore_hash
+RUN git clone https://github.com/safeminemore/safeminemore_hash
+RUN cd safeminemore_hash && python3 setup.py install
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -27,8 +27,8 @@ ARG GROUP_ID=1000
 # add user with specified (or default) user/group ids
 ENV USER_ID ${USER_ID}
 ENV GROUP_ID ${GROUP_ID}
-RUN groupadd -g ${GROUP_ID} safemine
-RUN useradd -u ${USER_ID} -g safemine -s /bin/bash -m -d /safemine safemine
+RUN groupadd -g ${GROUP_ID} safeminemore
+RUN useradd -u ${USER_ID} -g safeminemore -s /bin/bash -m -d /safeminemore safeminemore
 
 # Packages needed for all target builds
 RUN dpkg --add-architecture i386
@@ -55,13 +55,13 @@ RUN \
   update-alternatives --set x86_64-w64-mingw32-g++  /usr/bin/x86_64-w64-mingw32-g++-posix; \
   exit 0
 
-RUN mkdir /safemine-src && \
+RUN mkdir /safeminemore-src && \
   mkdir -p /cache/ccache && \
   mkdir /cache/depends && \
   mkdir /cache/sdk-sources && \
-  chown $USER_ID:$GROUP_ID /safemine-src && \
+  chown $USER_ID:$GROUP_ID /safeminemore-src && \
   chown $USER_ID:$GROUP_ID /cache && \
   chown $USER_ID:$GROUP_ID /cache -R
-WORKDIR /safemine-src
+WORKDIR /safeminemore-src
 
-USER safemine
+USER safeminemore
