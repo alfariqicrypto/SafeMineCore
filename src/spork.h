@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -26,9 +27,11 @@ enum SporkId : int32_t {
     SPORK_9_SUPERBLOCKS_ENABLED                            = 10008,
     SPORK_17_QUORUM_DKG_ENABLED                            = 10016,
     SPORK_19_CHAINLOCKS_ENABLED                            = 10018,
-    SPORK_21_QUORUM_ALL_CONNECTED                          = 10020,
-    SPORK_23_QUORUM_POSE                                   = 10022,
-
+    SPORK_21_LOW_LLMQ_PARAMS                        	   = 10020,
+    SPORK_22_SPECIAL_TX_FEE                                = 10021,
+    SPORK_23_QUORUM_ALL_CONNECTED                          = 10023,
+    SPORK_24_PS_MORE_PARTICIPANTS                          = 10024,
+    SPORK_25_QUORUM_POSE                                   = 10025,
     SPORK_INVALID                                          = -1,
 };
 template<> struct is_serializable_enum<SporkId> : std::true_type {};
@@ -193,7 +196,7 @@ public:
         }
         // we don't serialize pubkey ids because pubkeys should be
         // hardcoded or be setted with cmdline or options, should
-        // not reuse pubkeys from previous safemined run
+        // not reuse pubkeys from previous safeminemored run
         LOCK(cs);
         READWRITE(mapSporksByHash);
         READWRITE(mapSporksActive);

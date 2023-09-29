@@ -1,4 +1,5 @@
 // Copyright (c) 2019-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -103,7 +104,7 @@ public:
     void CheckActiveState();
     void TrySignChainTip();
     void EnforceBestChainLock();
-    virtual void HandleNewRecoveredSig(const CRecoveredSig& recoveredSig);
+    void HandleNewRecoveredSig(const CRecoveredSig& recoveredSig) override;
 
     bool HasChainLock(int nHeight, const uint256& blockHash);
     bool HasConflictingChainLock(int nHeight, const uint256& blockHash);

@@ -12,7 +12,7 @@
 #include <rpc/register.h>
 #include <rpc/server.h>
 #include <qt/rpcconsole.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 #include <univalue.h>
 #include <util.h>
 

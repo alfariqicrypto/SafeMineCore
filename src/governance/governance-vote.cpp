@@ -1,10 +1,11 @@
-// Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <governance/governance-vote.h>
 #include <governance/governance-object.h>
-#include <masternode/masternode-sync.h>
+#include <smartnode/smartnode-sync.h>
 #include <messagesigner.h>
 #include <util.h>
 
@@ -80,7 +81,7 @@ CGovernanceVote::CGovernanceVote() :
     fValid(true),
     fSynced(false),
     nVoteSignal(int(VOTE_SIGNAL_NONE)),
-    masternodeOutpoint(),
+    smartnodeOutpoint(),
     nParentHash(),
     nVoteOutcome(int(VOTE_OUTCOME_NONE)),
     nTime(0),
@@ -88,11 +89,11 @@ CGovernanceVote::CGovernanceVote() :
 {
 }
 
-CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) :
+CGovernanceVote::CGovernanceVote(const COutPoint& outpointSmartnodeIn, const uint256& nParentHashIn, vote_signal_enum_t eVoteSignalIn, vote_outcome_enum_t eVoteOutcomeIn) :
     fValid(true),
     fSynced(false),
     nVoteSignal(eVoteSignalIn),
-    masternodeOutpoint(outpointMasternodeIn),
+    smartnodeOutpoint(outpointSmartnodeIn),
     nParentHash(nParentHashIn),
     nVoteOutcome(eVoteOutcomeIn),
     nTime(GetAdjustedTime()),
@@ -104,7 +105,7 @@ CGovernanceVote::CGovernanceVote(const COutPoint& outpointMasternodeIn, const ui
 std::string CGovernanceVote::ToString() const
 {
     std::ostringstream ostr;
-    ostr << masternodeOutpoint.ToStringShort() << ":"
+    ostr << smartnodeOutpoint.ToStringShort() << ":"
          << nTime << ":"
          << CGovernanceVoting::ConvertOutcomeToString(GetOutcome()) << ":"
          << CGovernanceVoting::ConvertSignalToString(GetSignal());
@@ -114,13 +115,13 @@ std::string CGovernanceVote::ToString() const
 void CGovernanceVote::Relay(CConnman& connman) const
 {
     // Do not relay until fully synced
-    if (!masternodeSync.IsSynced()) {
+    if (!smartnodeSync.IsSynced()) {
         LogPrint(BCLog::GOBJECT, "CGovernanceVote::Relay -- won't relay until fully synced\n");
         return;
     }
 
     auto mnList = deterministicMNManager->GetListAtChainTip();
-    auto dmn = mnList.GetMNByCollateral(masternodeOutpoint);
+    auto dmn = mnList.GetMNByCollateral(smartnodeOutpoint);
     if (!dmn) {
         return;
     }
@@ -141,7 +142,7 @@ void CGovernanceVote::UpdateHash() const
     // Note: doesn't match serialization
 
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-    ss << masternodeOutpoint << uint8_t{} << 0xffffffff; // adding dummy values here to match old hashing format
+    ss << smartnodeOutpoint << uint8_t{} << 0xffffffff; // adding dummy values here to match old hashing format
     ss << nParentHash;
     ss << nVoteSignal;
     ss << nVoteOutcome;
@@ -165,19 +166,19 @@ bool CGovernanceVote::Sign(const CKey& key, const CKeyID& keyID)
 
     // Harden Spork6 so that it is active on testnet and no other networks
     if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
-        uint256 hash = GetSignatureHash();
+        uint256 signatureHash = GetSignatureHash();
 
-        if (!CHashSigner::SignHash(hash, key, vchSig)) {
+        if (!CHashSigner::SignHash(signatureHash, key, vchSig)) {
             LogPrintf("CGovernanceVote::Sign -- SignHash() failed\n");
             return false;
         }
 
-        if (!CHashSigner::VerifyHash(hash, keyID, vchSig, strError)) {
+        if (!CHashSigner::VerifyHash(signatureHash, keyID, vchSig, strError)) {
             LogPrintf("CGovernanceVote::Sign -- VerifyHash() failed, error: %s\n", strError);
             return false;
         }
     } else {
-        std::string strMessage = masternodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
+        std::string strMessage = smartnodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
                                  std::to_string(nVoteSignal) + "|" + std::to_string(nVoteOutcome) + "|" + std::to_string(nTime);
 
         if (!CMessageSigner::SignMessage(strMessage, vchSig, key)) {
@@ -200,14 +201,12 @@ bool CGovernanceVote::CheckSignature(const CKeyID& keyID) const
 
     // Harden Spork6 so that it is active on testnet and no other networks
     if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
-        uint256 hash = GetSignatureHash();
-
-        if (!CHashSigner::VerifyHash(hash, keyID, vchSig, strError)) {
+        if (!CHashSigner::VerifyHash(GetSignatureHash(), keyID, vchSig, strError)) {
             LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- VerifyHash() failed, error: %s\n", strError);
             return false;
         }
     } else {
-        std::string strMessage = masternodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
+        std::string strMessage = smartnodeOutpoint.ToStringShort() + "|" + nParentHash.ToString() + "|" +
                                  std::to_string(nVoteSignal) + "|" +
                                  std::to_string(nVoteOutcome) + "|" +
                                  std::to_string(nTime);
@@ -223,8 +222,7 @@ bool CGovernanceVote::CheckSignature(const CKeyID& keyID) const
 
 bool CGovernanceVote::Sign(const CBLSSecretKey& key)
 {
-    uint256 hash = GetSignatureHash();
-    CBLSSignature sig = key.Sign(hash);
+    CBLSSignature sig = key.Sign(GetSignatureHash());
     if (!sig.IsValid()) {
         return false;
     }
@@ -260,9 +258,9 @@ bool CGovernanceVote::IsValid(bool useVotingKey) const
         return false;
     }
 
-    auto dmn = deterministicMNManager->GetListAtChainTip().GetMNByCollateral(masternodeOutpoint);
+    auto dmn = deterministicMNManager->GetListAtChainTip().GetMNByCollateral(smartnodeOutpoint);
     if (!dmn) {
-        LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- Unknown Masternode - %s\n", masternodeOutpoint.ToStringShort());
+        LogPrint(BCLog::GOBJECT, "CGovernanceVote::IsValid -- Unknown Smartnode - %s\n", smartnodeOutpoint.ToStringShort());
         return false;
     }
 
@@ -275,7 +273,7 @@ bool CGovernanceVote::IsValid(bool useVotingKey) const
 
 bool operator==(const CGovernanceVote& vote1, const CGovernanceVote& vote2)
 {
-    bool fResult = ((vote1.masternodeOutpoint == vote2.masternodeOutpoint) &&
+    bool fResult = ((vote1.smartnodeOutpoint == vote2.smartnodeOutpoint) &&
                     (vote1.nParentHash == vote2.nParentHash) &&
                     (vote1.nVoteOutcome == vote2.nVoteOutcome) &&
                     (vote1.nVoteSignal == vote2.nVoteSignal) &&
@@ -285,11 +283,11 @@ bool operator==(const CGovernanceVote& vote1, const CGovernanceVote& vote2)
 
 bool operator<(const CGovernanceVote& vote1, const CGovernanceVote& vote2)
 {
-    bool fResult = (vote1.masternodeOutpoint < vote2.masternodeOutpoint);
+    bool fResult = (vote1.smartnodeOutpoint < vote2.smartnodeOutpoint);
     if (!fResult) {
         return false;
     }
-    fResult = (vote1.masternodeOutpoint == vote2.masternodeOutpoint);
+    fResult = (vote1.smartnodeOutpoint == vote2.smartnodeOutpoint);
 
     fResult = fResult && (vote1.nParentHash < vote2.nParentHash);
     if (!fResult) {

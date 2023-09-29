@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2014 The Bitcoin Core developers
 // Copyright (c) 2014-2020 The Dash Core developers
-// Copyright (c) 2021 The SafeMine Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,7 +19,7 @@ OpenURIDialog::OpenURIDialog(QWidget *parent) :
     ui->setupUi(this);
     GUIUtil::updateFonts();
     GUIUtil::disableMacFocusRect(this);
-    ui->uriEdit->setPlaceholderText("safemine:");
+    ui->uriEdit->setPlaceholderText("safeminemore:");
 }
 
 OpenURIDialog::~OpenURIDialog()
@@ -50,5 +50,5 @@ void OpenURIDialog::on_selectFileButton_clicked()
     if(filename.isEmpty())
         return;
     QUrl fileUri = QUrl::fromLocalFile(filename);
-    ui->uriEdit->setText("safemine:?r=" + QUrl::toPercentEncoding(fileUri.toString()));
+    ui->uriEdit->setText("safeminemore:?r=" + QUrl::toPercentEncoding(fileUri.toString()));
 }

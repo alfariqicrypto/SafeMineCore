@@ -6,7 +6,7 @@
 #define BITCOIN_ZMQ_ZMQCONFIG_H
 
 #if defined(HAVE_CONFIG_H)
-#include <config/safemine-config.h>
+#include <config/safeminemore-config.h>
 #endif
 
 #include <stdarg.h>

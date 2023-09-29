@@ -10,8 +10,8 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between safemine-cli and safemined)
- * of a given instance of the SafeMine system.
+ * CBaseChainParams defines the base parameters (shared between safeminemore-cli and safeminemored)
+ * of a given instance of the Safeminemore system.
  */
 class CBaseChainParams
 {

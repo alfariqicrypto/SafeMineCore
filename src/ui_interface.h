@@ -105,11 +105,14 @@ public:
     /** New block has been accepted */
     boost::signals2::signal<void (bool, const CBlockIndex *)> NotifyBlockTip;
 
+    /** New block has been accepted */
+    boost::signals2::signal<void (bool, const CBlockIndex *)> BlockNotifyTip;
+
     /** Best header has changed */
     boost::signals2::signal<void (bool, const CBlockIndex *)> NotifyHeaderTip;
 
-    /** Masternode list has changed */
-    boost::signals2::signal<void (const CDeterministicMNList&)> NotifyMasternodeListChanged;
+    /** Smartnode list has changed */
+    boost::signals2::signal<void (const CDeterministicMNList&)> NotifySmartnodeListChanged;
 
     /** Additional data sync progress changed */
     boost::signals2::signal<void (double nSyncProgress)> NotifyAdditionalDataSyncProgressChanged;

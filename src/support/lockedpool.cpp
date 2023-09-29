@@ -6,7 +6,7 @@
 #include <support/cleanse.h>
 
 #if defined(HAVE_CONFIG_H)
-#include <config/safemine-config.h>
+#include <config/safeminemore-config.h>
 #endif
 
 #ifdef WIN32

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
-    <height>420</height>
+    <width>595</width>
+    <height>462</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -102,7 +102,7 @@
       </size>
      </property>
      <property name="currentIndex">
-      <number>5</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="pageMain">
       <layout class="QVBoxLayout" name="verticalLayout_Main">
@@ -244,48 +244,48 @@
      <widget class="QWidget" name="pageWallet">
       <layout class="QVBoxLayout" name="verticalLayout_Wallet">
        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QCheckBox" name="coinControlFeatures">
-            <property name="toolTip">
-             <string>Whether to show coin control features or not.</string>
-            </property>
-            <property name="text">
-             <string>Enable coin &amp;control features</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="showMasternodesTab">
-            <property name="toolTip">
-             <string>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</string>
-            </property>
-            <property name="text">
-             <string>Show Masternodes Tab</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="spendZeroConfChange">
-            <property name="toolTip">
-             <string>If you disable the spending of unconfirmed change, the change from a transaction&lt;br/&gt;cannot be used until that transaction has at least one confirmation.&lt;br/&gt;This also affects how your balance is computed.</string>
-            </property>
-            <property name="text">
-             <string>&amp;Spend unconfirmed change</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="coinJoinEnabled">
-            <property name="toolTip">
-             <string>Show mixing interface on Overview screen and reveal an additional screen which allows to spend fully mixed coins only.&lt;br/&gt;A new tab with more settings will also appear in this dialog, please make sure to check them before mixing your coins.</string>
-            </property>
-            <property name="text">
-             <string notr="true">Enable CoinJoin features</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QCheckBox" name="coinControlFeatures">
+           <property name="toolTip">
+            <string>Whether to show coin control features or not.</string>
+           </property>
+           <property name="text">
+            <string>Enable coin &amp;control features</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="showSmartnodesTab">
+           <property name="toolTip">
+            <string>Show additional tab listing all your smartnodes in first sub-tab&lt;br/&gt;and all smartnodes on the network in second sub-tab.</string>
+           </property>
+           <property name="text">
+            <string>Show Smartnodes Tab</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="spendZeroConfChange">
+           <property name="toolTip">
+            <string>If you disable the spending of unconfirmed change, the change from a transaction&lt;br/&gt;cannot be used until that transaction has at least one confirmation.&lt;br/&gt;This also affects how your balance is computed.</string>
+           </property>
+           <property name="text">
+            <string>&amp;Spend unconfirmed change</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="coinJoinEnabled">
+           <property name="toolTip">
+            <string>Show mixing interface on Overview screen and reveal an additional screen which allows to spend fully mixed coins only.&lt;br/&gt;A new tab with more settings will also appear in this dialog, please make sure to check them before mixing your coins.</string>
+           </property>
+           <property name="text">
+            <string notr="true">Enable CoinJoin features</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <spacer name="verticalSpacer_Wallet">
@@ -349,7 +349,7 @@
          <item>
           <widget class="QLabel" name="lblCoinJoinRoundsText">
            <property name="toolTip">
-            <string>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</string>
+            <string>This setting determines the amount of individual smartnodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</string>
            </property>
            <property name="text">
             <string>Mixing rounds</string>
@@ -398,16 +398,16 @@
          <item>
           <widget class="QSpinBox" name="coinJoinAmount">
            <property name="minimum">
-            <number>2</number>
+            <number>1000</number>
            </property>
            <property name="maximum">
-            <number>2000</number>
+            <number>2000000</number>
            </property>
            <property name="singleStep">
-            <number>10</number>
+            <number>1000</number>
            </property>
            <property name="value">
-            <number>1000</number>
+            <number>1000000</number>
            </property>
           </widget>
          </item>
@@ -433,7 +433,7 @@
        <item>
         <widget class="QCheckBox" name="mapPortUpnp">
          <property name="toolTip">
-          <string>Automatically open the SafeMine Core client port on the router. This only works when your router supports UPnP and it is enabled.</string>
+          <string>Automatically open the Safeminemore Core client port on the router. This only works when your router supports UPnP and it is enabled.</string>
          </property>
          <property name="text">
           <string>Map port using &amp;UPnP</string>
@@ -453,7 +453,7 @@
        <item>
         <widget class="QCheckBox" name="connectSocks">
          <property name="toolTip">
-          <string>Connect to the SafeMine network through a SOCKS5 proxy.</string>
+          <string>Connect to the Safeminemore network through a SOCKS5 proxy.</string>
          </property>
          <property name="text">
           <string>&amp;Connect through SOCKS5 proxy (default proxy):</string>
@@ -610,7 +610,7 @@
        <item>
         <widget class="QCheckBox" name="connectSocksTor">
          <property name="toolTip">
-          <string>Connect to the SafeMine network through a separate SOCKS5 proxy for Tor hidden services.</string>
+          <string>Connect to the Safeminemore network through a separate SOCKS5 proxy for Tor hidden services.</string>
          </property>
          <property name="text">
           <string>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</string>
@@ -755,7 +755,7 @@
          </property>
          <property name="text">
           <string>Language missing or translation incomplete? Help contributing translations here:
-https://www.transifex.com/projects/p/safemine/</string>
+https://www.transifex.com/projects/p/safeminemore/</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

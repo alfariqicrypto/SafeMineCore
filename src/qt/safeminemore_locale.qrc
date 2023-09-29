@@ -1,0 +1,25 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource prefix="/translations">
+        <file alias="ar">locale/safeminemore_ar.qm</file>
+        <file alias="bg">locale/safeminemore_bg.qm</file>
+        <file alias="de">locale/safeminemore_de.qm</file>
+        <file alias="en">locale/safeminemore_en.qm</file>
+        <file alias="es">locale/safeminemore_es.qm</file>
+        <file alias="fi">locale/safeminemore_fi.qm</file>
+        <file alias="fr">locale/safeminemore_fr.qm</file>
+        <file alias="it">locale/safeminemore_it.qm</file>
+        <file alias="ja">locale/safeminemore_ja.qm</file>
+        <file alias="ko">locale/safeminemore_ko.qm</file>
+        <file alias="nl">locale/safeminemore_nl.qm</file>
+        <file alias="pl">locale/safeminemore_pl.qm</file>
+        <file alias="pt">locale/safeminemore_pt.qm</file>
+        <file alias="ro">locale/safeminemore_ro.qm</file>
+        <file alias="ru">locale/safeminemore_ru.qm</file>
+        <file alias="sk">locale/safeminemore_sk.qm</file>
+        <file alias="th">locale/safeminemore_th.qm</file>
+        <file alias="tr">locale/safeminemore_tr.qm</file>
+        <file alias="vi">locale/safeminemore_vi.qm</file>
+        <file alias="zh_CN">locale/safeminemore_zh_CN.qm</file>
+        <file alias="zh_TW">locale/safeminemore_zh_TW.qm</file>
+    </qresource>
+</RCC>

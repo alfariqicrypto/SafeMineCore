@@ -9,10 +9,10 @@
 
 /**
  * Name of client reported in the 'version' message. Report the same name
- * for both safemined and safemine-qt, to make it harder for attackers to
+ * for both safeminemored and safeminemore-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("SafeMine Core");
+const std::string CLIENT_NAME("Safeminemore Core");
 
 /**
  * Client version number
@@ -42,10 +42,9 @@ const std::string CLIENT_NAME("SafeMine Core");
 #endif
 
 //! git will put "#define GIT_ARCHIVE 1" on the next line inside archives. 
-#define GIT_ARCHIVE 1
 #ifdef GIT_ARCHIVE
-#define GIT_COMMIT_ID ""
-#define GIT_COMMIT_DATE ""
+#define GIT_COMMIT_ID "2e65bbd3a74293d5ad641b4bfe2ff74ee628542d"
+#define GIT_COMMIT_DATE "Wed, 23 Aug 2023 07:19:04 +0800"
 #endif
 
 #define BUILD_DESC_WITH_SUFFIX(maj, min, rev, build, suffix) \

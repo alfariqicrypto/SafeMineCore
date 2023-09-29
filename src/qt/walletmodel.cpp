@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2021 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,8 +20,8 @@
 #include <util.h> // for GetBoolArg
 #include <wallet/coincontrol.h>
 #include <wallet/wallet.h>
-
 #include <spork.h>
+#include <validation.h>
 
 #include <stdint.h>
 
@@ -28,6 +29,8 @@
 #include <QSet>
 #include <QTimer>
 
+static int64_t nLastUpdateNotification = 0;
+static bool ninitialSync = false;
 
 WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces::Node& node, OptionsModel *_optionsModel, QObject *parent) :
     QObject(parent), m_wallet(std::move(wallet)), m_node(node), optionsModel(_optionsModel), addressTableModel(0),
@@ -73,23 +76,31 @@ void WalletModel::pollBalanceChanged()
     // avoids the GUI from getting stuck on periodical polls if the core is
     // holding the locks for a longer time - for example, during a wallet
     // rescan.
-    interfaces::WalletBalances new_balances;
-    int numBlocks = -1;
-    if (!m_wallet->tryGetBalances(new_balances, numBlocks)) {
-        return;
-    }
+    int64_t now = 0;
+    if (ninitialSync)
+        now = GetTimeMillis();
 
-    if(fForceCheckBalanceChanged || numBlocks != cachedNumBlocks || node().coinJoinOptions().getRounds() != cachedCoinJoinRounds)
-    {
-        fForceCheckBalanceChanged = false;
+    // if we are in-sync, update the UI regardless of last update time
+    if (!ninitialSync || now - nLastUpdateNotification > MODEL_UPDATE_DELAY_SYNC) {    
+        interfaces::WalletBalances new_balances;
+        int numBlocks = -1;
+        if (!m_wallet->tryGetBalances(new_balances, numBlocks)) {
+            return;
+        }
+        nLastUpdateNotification = now;
 
-        // Balance and number of transactions might have changed
-        cachedNumBlocks = numBlocks;
-        cachedCoinJoinRounds = node().coinJoinOptions().getRounds();
+        if(fForceCheckBalanceChanged || numBlocks != cachedNumBlocks || node().coinJoinOptions().getRounds() != cachedCoinJoinRounds)
+        {
+            fForceCheckBalanceChanged = false;
 
-        checkBalanceChanged(new_balances);
-        if(transactionTableModel)
-            transactionTableModel->updateConfirmations();
+            // Balance and number of transactions might have changed
+            cachedNumBlocks = numBlocks;
+            cachedCoinJoinRounds = node().coinJoinOptions().getRounds();
+
+            checkBalanceChanged(new_balances);
+            if(transactionTableModel)
+                transactionTableModel->updateConfirmations();
+        }
     }
 }
 
@@ -158,6 +169,11 @@ bool WalletModel::validateAddress(const QString &address)
     return IsValidDestinationString(address.toStdString());
 }
 
+std::map<CTxDestination, CAmount> WalletModel::getAddressBalances() const
+{
+    return wallet().GetAddressBalances();
+}
+
 WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl)
 {
     CAmount total = 0;
@@ -177,7 +193,8 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
     QSet<QString> setAddress; // Used to detect duplicates
     int nAddresses = 0;
-
+    FuturePartialPayload fpp;
+    bool hasFuture = false;
     // Pre-check input data for validity
     for (const SendCoinsRecipient &rcp : recipients)
     {
@@ -206,7 +223,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             total += subtotal;
         }
         else
-        {   // User-entered safemine address / amount:
+        {   // User-entered safeminemore address / amount:
             if(!validateAddress(rcp.address))
             {
                 return InvalidAddress;
@@ -220,6 +237,13 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
             CScript scriptPubKey = GetScriptForDestination(DecodeDestination(rcp.address.toStdString()));
             CRecipient recipient = {scriptPubKey, rcp.amount, rcp.fSubtractFeeFromAmount};
+            if(rcp.isFutureOutput) {
+                hasFuture = true;
+                fpp.futureRecScript = scriptPubKey;
+                fpp.maturity = rcp.maturity;
+                fpp.locktime = rcp.locktime;
+            }
+
             vecSend.push_back(recipient);
 
             total += rcp.amount;
@@ -242,12 +266,24 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
     int nChangePosRet = -1;
 
     auto& newTx = transaction.getWtx();
-    newTx = m_wallet->createTransaction(vecSend, coinControl, true /* sign */, nChangePosRet, nFeeRequired, strFailReason);
+    newTx = m_wallet->createTransaction(vecSend, coinControl, true /* sign */, nChangePosRet, nFeeRequired, strFailReason, 0, hasFuture ? &fpp : nullptr);
     transaction.setTransactionFee(nFeeRequired);
     if (fSubtractFeeFromAmount && newTx)
         transaction.reassignAmounts();
 
-    if(!newTx)
+    if(newTx){
+        if(!Params().IsFutureActive(chainActive.Tip())){
+            CAmount subtotal = total;
+            if (nChangePosRet >= 0)
+                subtotal += newTx->get().vout.at(nChangePosRet).nValue;
+            if(!fSubtractFeeFromAmount)
+                subtotal += nFeeRequired;
+            if (subtotal > OLD_MAX_MONEY){
+                return AmountExceedsmaxmoney;
+            }
+        }
+    }
+    else
     {
         if(!fSubtractFeeFromAmount && (total + nFeeRequired) > nBalance)
         {
@@ -270,7 +306,6 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &transaction, bool fIsCoinJoin)
 {
     QByteArray transaction_array; /* store serialized transaction */
-
     {
         std::vector<std::pair<std::string, std::string>> vOrderForm;
         for (const SendCoinsRecipient &rcp : transaction.getRecipients())
@@ -287,7 +322,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
                 rcp.paymentRequest.SerializeToString(&value);
                 vOrderForm.emplace_back("PaymentRequest", std::move(value));
             }
-            else if (!rcp.message.isEmpty()) // Message from normal safemine:URI (safemine:XyZ...?message=example)
+            else if (!rcp.message.isEmpty()) // Message from normal safeminemore:URI (safeminemore:XyZ...?message=example)
                 vOrderForm.emplace_back("Message", rcp.message.toStdString());
         }
 
@@ -335,6 +370,16 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
     checkBalanceChanged(m_wallet->getBalances()); // update balance immediately, otherwise there could be a short noticeable delay until pollBalanceChanged hits
 
     return SendCoinsReturn(OK);
+}
+
+CAmount WalletModel::getBalance(const CCoinControl& coinControl) const
+{
+    if (coinControl.HasSelected())
+    {
+        return wallet().getAvailableBalance(coinControl);
+    }
+
+    return wallet().getBalance();
 }
 
 OptionsModel *WalletModel::getOptionsModel()
@@ -488,6 +533,11 @@ static void NotifyWatchonlyChanged(WalletModel *walletmodel, bool fHaveWatchonly
                               Q_ARG(bool, fHaveWatchonly));
 }
 
+static void BlockTipChanged(WalletModel *walletmodel, bool initialSync )
+{
+    ninitialSync =initialSync;
+}
+
 void WalletModel::subscribeToCoreSignals()
 {
     // Connect signals to wallet
@@ -499,6 +549,7 @@ void WalletModel::subscribeToCoreSignals()
     m_handler_chainlock_received = m_wallet->handleChainLockReceived(boost::bind(NotifyChainLockReceived, this, _1));
     m_handler_show_progress = m_wallet->handleShowProgress(boost::bind(ShowProgress, this, _1, _2));
     m_handler_watch_only_changed = m_wallet->handleWatchOnlyChanged(boost::bind(NotifyWatchonlyChanged, this, _1));
+    m_handler_block_notify_tip =  m_wallet->handleBlockNotifyTip(boost::bind(BlockTipChanged, this, _1));
 }
 
 void WalletModel::unsubscribeFromCoreSignals()
@@ -512,6 +563,7 @@ void WalletModel::unsubscribeFromCoreSignals()
     m_handler_chainlock_received->disconnect();
     m_handler_show_progress->disconnect();
     m_handler_watch_only_changed->disconnect();
+    m_handler_block_notify_tip->disconnect();
 }
 
 // WalletModel::UnlockContext implementation

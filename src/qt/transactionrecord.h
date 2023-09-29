@@ -18,6 +18,9 @@ class Wallet;
 struct WalletTx;
 struct WalletTxStatus;
 }
+class CWallet;
+class CWalletTx;
+class CFutureTx;
 
 /** UI model for transaction status. The transaction status is the part of a transaction that will change over time.
  */
@@ -96,11 +99,13 @@ public:
         CoinJoinCollateralPayment,
         CoinJoinMakeCollaterals,
         CoinJoinCreateDenominations,
-        CoinJoinSend
+        CoinJoinSend,
+        FutureSend,
+        FutureReceive
     };
 
     /** Number of confirmation recommended for accepting a transaction */
-    static const int RecommendedNumConfirmations = 2;
+    static const int RecommendedNumConfirmations = 6;
 
     TransactionRecord():
             hash(), time(0), type(Other), strAddress(""), debit(0), credit(0), idx(0)
@@ -127,7 +132,7 @@ public:
     /** Decompose CWallet transaction to model transaction records.
      */
     static bool showTransaction();
-    static QList<TransactionRecord> decomposeTransaction(interfaces::Wallet& wallet, const interfaces::WalletTx& wtx);
+    static QList<TransactionRecord> decomposeTransaction(interfaces::Wallet& wallet, const std::shared_ptr<const interfaces::WalletTx> wtx);
 
     /** @name Immutable transaction attributes
       @{*/
@@ -161,7 +166,7 @@ public:
 
     /** Update status from core wallet tx.
      */
-    void updateStatus(const interfaces::WalletTxStatus& wtx, int numBlocks, int64_t adjustedTime, int chainLockHeight);
+    void updateStatus(const std::shared_ptr<const interfaces::WalletTx> wtx, const interfaces::WalletTxStatus& wtxStatus, int numBlocks, int64_t adjustedTime, int chainLockHeight);
 
     /** Return whether a status update is needed.
      */
@@ -170,6 +175,22 @@ public:
     /** Update label from address book.
      */
     void updateLabel(interfaces::Wallet& wallet);
+
+    /** Return the block height of this transaction */
+    int getTransactionBlockHeight(const CWalletTx &wtx);
+
+    /** Return the Future TX Maturity block height */
+    int getFutureTxMaturityBlock(const CWalletTx &wtx, CFutureTx &ftx);
+
+    /** Return the Future TX Maturity time */
+    int getFutureTxMaturityTime(const CWalletTx &wtx, CFutureTx &ftx);
+
+    /** Return whether Future TX has matured */
+    bool isFutureTxMatured(const CWalletTx &wtx, CFutureTx &ftx);
+
+    /** Return the Future TX Status based on maturity */
+    void getFutureTxStatus(const std::shared_ptr<const interfaces::WalletTx> wtx, const interfaces::WalletTxStatus& wtxStatus, CFutureTx &ftx);
+
 };
 
 #endif // BITCOIN_QT_TRANSACTIONRECORD_H

@@ -21,7 +21,7 @@
 #endif
 
 #if defined(HAVE_CONFIG_H)
-#include <config/safemine-config.h> /* for USE_QRCODE */
+#include <config/safeminemore-config.h> /* for USE_QRCODE */
 #endif
 
 #ifdef USE_QRCODE

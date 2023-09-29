@@ -1,5 +1,6 @@
 // Copyright (c) 2016 The Bitcoin Core developers
 // Copyright (c) 2018-2020 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -47,9 +48,9 @@ static void HASH_SHA256_0032b(benchmark::State& state)
 {
     std::vector<uint8_t> in(32,0);
     while (state.KeepRunning()) {
-        CSHA256()
-            .Write(in.data(), in.size())
-            .Finalize(in.data());
+        for (int i = 0; i < 1000000; i++) {
+            CSHA256().Write(in.data(), in.size()).Finalize(in.data());
+        }
     }
 }
 
@@ -65,7 +66,9 @@ static void HASH_DSHA256_0032b(benchmark::State& state)
 {
     std::vector<uint8_t> in(32,0);
     while (state.KeepRunning()) {
-        CHash256().Write(in.data(), in.size()).Finalize(in.data());
+        for (int i = 0; i < 1000000; i++) {
+            CHash256().Write(in.data(), in.size()).Finalize(in.data());
+        }
     }
 }
 
@@ -154,60 +157,102 @@ static void HASH_DSHA256_2048b_single(benchmark::State& state)
         CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
-static void HASH_X11(benchmark::State& state)
+static void HASH_GR(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(BUFFER_SIZE,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
 }
 
-static void HASH_X11_0032b_single(benchmark::State& state)
+static void HASH_GR_0032b_single(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(32,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
 }
 
-static void HASH_X11_0080b_single(benchmark::State& state)
+static void HASH_GR_0080b_single(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(80,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
 }
 
-static void HASH_X11_0128b_single(benchmark::State& state)
+static void HASH_GR_0128b_single(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(128,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
 }
 
-static void HASH_X11_0512b_single(benchmark::State& state)
+static void HASH_GR_0512b_single(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(512,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
 }
 
-static void HASH_X11_1024b_single(benchmark::State& state)
+static void HASH_GR_1024b_single(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(1024,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
 }
 
-static void HASH_X11_2048b_single(benchmark::State& state)
+static void HASH_GR_2048b_single(benchmark::State& state)
 {
     uint256 hash;
     std::vector<uint8_t> in(2048,0);
     while (state.KeepRunning())
-        hash = HashX11(in.begin(), in.end());
+        hash = HashGR(in.begin(), in.end(), uint256());
+}
+
+
+static void HashCn(benchmark::State& state, int hashSelection)
+{
+    uint512 hashIn;
+    uint512 hashOut;
+    while (state.KeepRunning())
+    {
+        cnHash(&hashIn, &hashOut, 64, hashSelection);
+        hashIn = hashOut;
+    }
+}
+
+static void HASH_CN_cryptonight_dark_hash(benchmark::State& state)
+{
+    HashCn(state, 0);
+}
+
+static void HASH_CN_cryptonight_darklite_hash(benchmark::State& state)
+{
+    HashCn(state, 1);
+}
+
+static void HASH_CN_cryptonight_cnfast_hash(benchmark::State& state)
+{
+    HashCn(state, 2);
+}
+
+static void HASH_CN_cryptonight_cnlite_hash(benchmark::State& state)
+{
+    HashCn(state, 3);
+}
+
+static void HASH_CN_cryptonight_turtle_hash(benchmark::State& state)
+{
+    HashCn(state, 4);
+}
+
+static void HASH_CN_cryptonight_turtlelite_hash(benchmark::State& state)
+{
+    HashCn(state, 5);
 }
 
 BENCHMARK(HASH_RIPEMD160, 440);
@@ -215,7 +260,7 @@ BENCHMARK(HASH_SHA1, 570);
 BENCHMARK(HASH_SHA256, 340);
 BENCHMARK(HASH_DSHA256, 340);
 BENCHMARK(HASH_SHA512, 330);
-BENCHMARK(HASH_X11, 500);
+BENCHMARK(HASH_GR, 500);
 
 BENCHMARK(HASH_SHA256_0032b, 4 * 1000 * 1000);
 BENCHMARK(HASH_DSHA256_0032b, 2 * 1000 * 1000);
@@ -228,11 +273,18 @@ BENCHMARK(HASH_DSHA256_0128b_single, 1200 * 1000);
 BENCHMARK(HASH_DSHA256_0512b_single, 500 * 1000);
 BENCHMARK(HASH_DSHA256_1024b_single, 300 * 1000);
 BENCHMARK(HASH_DSHA256_2048b_single, 150 * 1000);
-BENCHMARK(HASH_X11_0032b_single, 70 * 1000);
-BENCHMARK(HASH_X11_0080b_single, 65 * 1000);
-BENCHMARK(HASH_X11_0128b_single, 60 * 1000);
-BENCHMARK(HASH_X11_0512b_single, 50 * 1000);
-BENCHMARK(HASH_X11_1024b_single, 50 * 1000);
-BENCHMARK(HASH_X11_2048b_single, 50 * 1000);
+BENCHMARK(HASH_GR_0032b_single, 70 * 1000);
+BENCHMARK(HASH_GR_0080b_single, 65 * 1000);
+BENCHMARK(HASH_GR_0128b_single, 60 * 1000);
+BENCHMARK(HASH_GR_0512b_single, 50 * 1000);
+BENCHMARK(HASH_GR_1024b_single, 50 * 1000);
+BENCHMARK(HASH_GR_2048b_single, 50 * 1000);
 BENCHMARK(FastRandom_32bit, 110 * 1000 * 1000);
 BENCHMARK(FastRandom_1bit, 440 * 1000 * 1000);
+
+BENCHMARK(HASH_CN_cryptonight_dark_hash,       120);
+BENCHMARK(HASH_CN_cryptonight_darklite_hash,   135);
+BENCHMARK(HASH_CN_cryptonight_cnfast_hash,      30);
+BENCHMARK(HASH_CN_cryptonight_cnlite_hash,      50);
+BENCHMARK(HASH_CN_cryptonight_turtle_hash,     290);
+BENCHMARK(HASH_CN_cryptonight_turtlelite_hash, 310);

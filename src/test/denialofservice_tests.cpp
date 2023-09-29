@@ -14,7 +14,7 @@
 #include <util.h>
 #include <validation.h>
 
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <stdint.h>
 

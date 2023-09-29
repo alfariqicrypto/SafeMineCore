@@ -66,7 +66,7 @@ static bool SignStep(const BaseSignatureCreator& creator, const CScript& scriptP
     ret.clear();
 
     std::vector<valtype> vSolutions;
-    if (!Solver(scriptPubKey, whichTypeRet, vSolutions))
+    if(!Solver(scriptPubKey, whichTypeRet, vSolutions))
         return false;
 
     CKeyID keyID;

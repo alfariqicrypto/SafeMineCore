@@ -1,9 +1,10 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2020 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_EVO_DETERMINISTICMNS_H
-#define BITCOIN_EVO_DETERMINISTICMNS_H
+#ifndef SAFEMINEMORE_DETERMINISTICMNS_H
+#define SAFEMINEMORE_DETERMINISTICMNS_H
 
 #include <arith_uint256.h>
 #include <bls/bls.h>
@@ -381,6 +382,16 @@ public:
     }
 
     template <typename Callback>
+    void ForEachMN(bool onlyValid, int height, Callback&& cb) const
+    {
+        for (const auto& p : mnMap) {
+            if (!onlyValid || IsMNValid(p.second, height)) {
+                cb(p.second);
+            }
+        }
+    }
+
+    template <typename Callback>
     void ForEachMN(bool onlyValid, Callback&& cb) const
     {
         for (const auto& p : mnMap) {
@@ -414,6 +425,7 @@ public:
 
     bool IsMNValid(const uint256& proTxHash) const;
     bool IsMNPoSeBanned(const uint256& proTxHash) const;
+    static bool IsMNValid(const CDeterministicMNCPtr& dmn, int height);
     static bool IsMNValid(const CDeterministicMNCPtr& dmn);
     static bool IsMNPoSeBanned(const CDeterministicMNCPtr& dmn);
 
@@ -689,7 +701,7 @@ public:
 
     // the returned list will not contain the correct block hash (we can't know it yet as the coinbase TX is not updated yet)
     bool BuildNewListFromBlock(const CBlock& block, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view, CDeterministicMNList& mnListRet, bool debugLogs);
-    static void HandleQuorumCommitment(llmq::CFinalCommitment& qc, const CBlockIndex* pindexQuorum, CDeterministicMNList& mnList, bool debugLogs);
+    static void HandleQuorumCommitment(const llmq::CFinalCommitment& qc, const CBlockIndex* pindexQuorum, CDeterministicMNList& mnList, bool debugLogs);
     static void DecreasePoSePenalties(CDeterministicMNList& mnList);
 
     CDeterministicMNList GetListForBlock(const CBlockIndex* pindex);
@@ -711,4 +723,4 @@ private:
 
 extern std::unique_ptr<CDeterministicMNManager> deterministicMNManager;
 
-#endif // BITCOIN_EVO_DETERMINISTICMNS_H
+#endif //SAFEMINEMORE_DETERMINISTICMNS_H

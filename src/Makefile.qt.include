@@ -1,34 +1,35 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
 # Copyright (c) 2014-2018 The Dash Core developers
+# Copyright (c) 2020-2022 The Safeminemore developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-bin_PROGRAMS += qt/safemine-qt
-EXTRA_LIBRARIES += qt/libsafemineqt.a
+bin_PROGRAMS += qt/safeminemore-qt
+EXTRA_LIBRARIES += qt/libsafeminemoreqt.a
 
-# safemine qt core #
+# safeminemore qt core #
 QT_TS = \
-  qt/locale/safemine_ar.ts \
-  qt/locale/safemine_bg.ts \
-  qt/locale/safemine_de.ts \
-  qt/locale/safemine_en.ts \
-  qt/locale/safemine_es.ts \
-  qt/locale/safemine_fi.ts \
-  qt/locale/safemine_fr.ts \
-  qt/locale/safemine_it.ts \
-  qt/locale/safemine_ja.ts \
-  qt/locale/safemine_ko.ts \
-  qt/locale/safemine_nl.ts \
-  qt/locale/safemine_pl.ts \
-  qt/locale/safemine_pt.ts \
-  qt/locale/safemine_ro.ts \
-  qt/locale/safemine_ru.ts \
-  qt/locale/safemine_sk.ts \
-  qt/locale/safemine_th.ts \
-  qt/locale/safemine_tr.ts \
-  qt/locale/safemine_vi.ts \
-  qt/locale/safemine_zh_CN.ts \
-  qt/locale/safemine_zh_TW.ts
+  qt/locale/safeminemore_ar.ts \
+  qt/locale/safeminemore_bg.ts \
+  qt/locale/safeminemore_de.ts \
+  qt/locale/safeminemore_en.ts \
+  qt/locale/safeminemore_es.ts \
+  qt/locale/safeminemore_fi.ts \
+  qt/locale/safeminemore_fr.ts \
+  qt/locale/safeminemore_it.ts \
+  qt/locale/safeminemore_ja.ts \
+  qt/locale/safeminemore_ko.ts \
+  qt/locale/safeminemore_nl.ts \
+  qt/locale/safeminemore_pl.ts \
+  qt/locale/safeminemore_pt.ts \
+  qt/locale/safeminemore_ro.ts \
+  qt/locale/safeminemore_ru.ts \
+  qt/locale/safeminemore_sk.ts \
+  qt/locale/safeminemore_th.ts \
+  qt/locale/safeminemore_tr.ts \
+  qt/locale/safeminemore_vi.ts \
+  qt/locale/safeminemore_zh_CN.ts \
+  qt/locale/safeminemore_zh_TW.ts
 
 QT_FORMS_UI = \
   qt/forms/addressbookpage.ui \
@@ -39,7 +40,7 @@ QT_FORMS_UI = \
   qt/forms/helpmessagedialog.ui \
   qt/forms/intro.ui \
   qt/forms/modaloverlay.ui \
-  qt/forms/masternodelist.ui \
+  qt/forms/smartnodelist.ui \
   qt/forms/qrdialog.ui \
   qt/forms/openuridialog.ui \
   qt/forms/optionsdialog.ui \
@@ -73,7 +74,7 @@ QT_MOC_CPP = \
   qt/moc_macdockiconhandler.cpp \
   qt/moc_macnotificationhandler.cpp \
   qt/moc_modaloverlay.cpp \
-  qt/moc_masternodelist.cpp \
+  qt/moc_smartnodelist.cpp \
   qt/moc_notificator.cpp \
   qt/moc_openuridialog.cpp \
   qt/moc_optionsdialog.cpp \
@@ -109,17 +110,17 @@ BITCOIN_MM = \
   qt/macos_appnap.mm
 
 QT_MOC = \
-  qt/safemine.moc \
+  qt/safeminemore.moc \
   qt/bitcoinamountfield.moc \
   qt/callback.moc \
   qt/intro.moc \
   qt/overviewpage.moc \
   qt/rpcconsole.moc
 
-QT_QRC_CPP = qt/qrc_safemine.cpp
-QT_QRC = qt/safemine.qrc
-QT_QRC_LOCALE_CPP = qt/qrc_safemine_locale.cpp
-QT_QRC_LOCALE = qt/safemine_locale.qrc
+QT_QRC_CPP = qt/qrc_safeminemore.cpp
+QT_QRC = qt/safeminemore.qrc
+QT_QRC_LOCALE_CPP = qt/qrc_safeminemore_locale.cpp
+QT_QRC_LOCALE = qt/safeminemore_locale.qrc
 
 PROTOBUF_CC = qt/paymentrequest.pb.cc
 PROTOBUF_H = qt/paymentrequest.pb.h
@@ -148,7 +149,7 @@ BITCOIN_QT_H = \
   qt/macnotificationhandler.h \
   qt/macos_appnap.h \
   qt/modaloverlay.h \
-  qt/masternodelist.h \
+  qt/smartnodelist.h \
   qt/networkstyle.h \
   qt/notificator.h \
   qt/openuridialog.h \
@@ -181,39 +182,62 @@ BITCOIN_QT_H = \
   qt/walletframe.h \
   qt/walletmodel.h \
   qt/walletmodeltransaction.h \
+  qt/walletmodelfuturestransaction.h \
   qt/walletview.h \
   qt/winshutdownmonitor.h
 
 RES_ICONS = \
-  qt/res/icons/safemine.ico \
-  qt/res/icons/safemine_testnet.ico \
-  qt/res/icons/safemine.png \
-  qt/res/icons/warning.png \
+  qt/res/icons/about.png \
+  qt/res/icons/about_qt.png \
+  qt/res/icons/add.png \
   qt/res/icons/address-book.png \
-  qt/res/icons/transaction0.png \
-  qt/res/icons/transaction1.png \
-  qt/res/icons/transaction2.png \
-  qt/res/icons/transaction3.png \
-  qt/res/icons/transaction4.png \
-  qt/res/icons/transaction5.png \
-  qt/res/icons/transaction_abandoned.png \
-  qt/res/icons/transaction_locked.png \
+  qt/res/icons/arrow_left.png \
+  qt/res/icons/arrow_right.png \
+  qt/res/icons/browse.png \
+  qt/res/icons/clock1.png \
+  qt/res/icons/clock2.png \
+  qt/res/icons/clock3.png \
+  qt/res/icons/clock4.png \
+  qt/res/icons/clock5.png \
+  qt/res/icons/clock6.png \
+  qt/res/icons/configure.png \
+  qt/res/icons/connect0_16.png \
   qt/res/icons/connect1_16.png \
   qt/res/icons/connect2_16.png \
   qt/res/icons/connect3_16.png \
   qt/res/icons/connect4_16.png \
+  qt/res/icons/console_remove.png \
+  qt/res/icons/debugwindow.png \
   qt/res/icons/editcopy.png \
   qt/res/icons/editpaste.png \
-  qt/res/icons/eye.png \
+  qt/res/icons/edit.png \
+  qt/res/icons/export.png \
   qt/res/icons/eye_minus.png \
   qt/res/icons/eye_plus.png \
+  qt/res/icons/eye.png \
+  qt/res/icons/filesave.png \
+  qt/res/icons/fontbigger.png \
+  qt/res/icons/fontsmaller.png \
   qt/res/icons/hd_enabled.png \
+  qt/res/icons/key.png \
   qt/res/icons/lock_closed.png \
   qt/res/icons/lock_open.png \
+  qt/res/icons/quit.png \
+  qt/res/icons/safeminemore.ico \
+  qt/res/icons/safeminemore.png \
+  qt/res/icons/safeminemore_testnet.ico \
+  qt/res/icons/receive.png \
   qt/res/icons/remove.png \
+  qt/res/icons/send.png \
   qt/res/icons/synced.png \
-  qt/res/icons/fontbigger.png \
-  qt/res/icons/fontsmaller.png
+  qt/res/icons/transaction0.png \
+  qt/res/icons/transaction2.png \
+  qt/res/icons/transaction_abandoned.png \
+  qt/res/icons/transaction_locked.png \
+  qt/res/icons/tx_inout.png \
+  qt/res/icons/tx_input.png \
+  qt/res/icons/tx_output.png \
+  qt/res/icons/warning.png
 
 BITCOIN_QT_BASE_CPP = \
   qt/appearancewidget.cpp \
@@ -249,7 +273,7 @@ BITCOIN_QT_WALLET_CPP = \
   qt/coincontroldialog.cpp \
   qt/coincontroltreewidget.cpp \
   qt/editaddressdialog.cpp \
-  qt/masternodelist.cpp \
+  qt/smartnodelist.cpp \
   qt/openuridialog.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \
@@ -270,6 +294,7 @@ BITCOIN_QT_WALLET_CPP = \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
+  qt/walletmodelfuturestransaction.cpp \
   qt/walletview.cpp
 
 BITCOIN_QT_CPP = $(BITCOIN_QT_BASE_CPP)
@@ -315,8 +340,7 @@ RES_IMAGES = \
   qt/res/images/checkbox_partly_checked_light.png \
   qt/res/images/checkbox_partly_checked_hover_light.png \
   qt/res/images/checkbox_partly_checked_disabled_light.png \
-  qt/res/images/safemine_logo_toolbar.png \
-  qt/res/images/safemine_logo_toolbar_blue.png \
+  qt/res/images/safeminemore_logo_toolbar.png \
   qt/res/images/radio_normal_dark.png \
   qt/res/images/radio_normal_hover_dark.png \
   qt/res/images/radio_checked_dark.png \
@@ -359,19 +383,19 @@ RES_FONTS = \
 
 RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
 
-BITCOIN_RC = qt/res/safemine-qt-res.rc
+BITCOIN_RC = qt/res/safeminemore-qt-res.rc
 
 BITCOIN_QT_INCLUDES = -DQT_NO_KEYWORDS
 
-qt_libsafemineqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+qt_libsafeminemoreqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(QT_DBUS_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
-qt_libsafemineqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
-qt_libsafemineqt_a_OBJCXXFLAGS = $(AM_OBJCXXFLAGS) $(QT_PIE_FLAGS)
+qt_libsafeminemoreqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
+qt_libsafeminemoreqt_a_OBJCXXFLAGS = $(AM_OBJCXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_libsafemineqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
+qt_libsafeminemoreqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
   $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_CSS) $(RES_FONTS) $(RES_MOVIES)
 
-nodist_qt_libsafemineqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
+nodist_qt_libsafeminemoreqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
   $(PROTOBUF_H) $(QT_QRC_CPP) $(QT_QRC_LOCALE_CPP)
 
 # forms/foo.h -> forms/ui_foo.h
@@ -380,71 +404,71 @@ QT_FORMS_H=$(join $(dir $(QT_FORMS_UI)),$(addprefix ui_, $(notdir $(QT_FORMS_UI:
 # Most files will depend on the forms and moc files as includes. Generate them
 # before anything else.
 $(QT_MOC): $(QT_FORMS_H)
-$(qt_libsafemineqt_a_OBJECTS) $(qt_safemine_qt_OBJECTS) : | $(QT_MOC)
+$(qt_libsafeminemoreqt_a_OBJECTS) $(qt_safeminemore_qt_OBJECTS) : | $(QT_MOC)
 
 #Generating these with a half-written protobuf header leads to wacky results.
 #This makes sure it's done.
 $(QT_MOC): $(PROTOBUF_H)
 $(QT_MOC_CPP): $(PROTOBUF_H)
 
-# safemine-qt binary #
-qt_safemine_qt_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+# safeminemore-qt binary #
+qt_safeminemore_qt_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
-qt_safemine_qt_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
+qt_safeminemore_qt_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_safemine_qt_SOURCES = qt/safemine.cpp
+qt_safeminemore_qt_SOURCES = qt/safeminemore.cpp
 if TARGET_DARWIN
-  qt_safemine_qt_SOURCES += $(BITCOIN_MM)
+  qt_safeminemore_qt_SOURCES += $(BITCOIN_MM)
 endif
 if TARGET_WINDOWS
-  qt_safemine_qt_SOURCES += $(BITCOIN_RC)
+  qt_safeminemore_qt_SOURCES += $(BITCOIN_RC)
 endif
-qt_safemine_qt_LDADD = qt/libsafemineqt.a $(LIBBITCOIN_SERVER)
+qt_safeminemore_qt_LDADD = qt/libsafeminemoreqt.a $(LIBBITCOIN_SERVER)
 if ENABLE_WALLET
-qt_safemine_qt_LDADD += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
+qt_safeminemore_qt_LDADD += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
 endif
 if ENABLE_ZMQ
-qt_safemine_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
+qt_safeminemore_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
-qt_safemine_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
+qt_safeminemore_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
   $(BACKTRACE_LIB) $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(BLS_LIBS)
-qt_safemine_qt_LDFLAGS = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-qt_safemine_qt_LIBTOOLFLAGS = $(AM_LIBTOOLFLAGS) --tag CXX
+qt_safeminemore_qt_LDFLAGS = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+qt_safeminemore_qt_LIBTOOLFLAGS = $(AM_LIBTOOLFLAGS) --tag CXX
 
 #locale/foo.ts -> locale/foo.qm
 QT_QM=$(QT_TS:.ts=.qm)
 
 SECONDARY: $(QT_QM)
 
-$(srcdir)/qt/safeminestrings.cpp: FORCE
+$(srcdir)/qt/safeminemorestrings.cpp: FORCE
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
-	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $(libsafemine_server_a_SOURCES) $(libsafemine_wallet_a_SOURCES) $(libsafemine_common_a_SOURCES) $(libsafemine_zmq_a_SOURCES) $(libsafemine_consensus_a_SOURCES) $(libsafemine_util_a_SOURCES)
+	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $(libdash_server_a_SOURCES) $(libdash_wallet_a_SOURCES) $(libdash_common_a_SOURCES) $(libdash_zmq_a_SOURCES) $(libdash_consensus_a_SOURCES) $(libdash_util_a_SOURCES)
 
-translate: $(srcdir)/qt/safeminestrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(BITCOIN_QT_BASE_CPP) qt/safemine.cpp $(BITCOIN_QT_WINDOWS_CPP) $(BITCOIN_QT_WALLET_CPP) $(BITCOIN_QT_H) $(BITCOIN_MM)
+translate: $(srcdir)/qt/safeminemorestrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(BITCOIN_QT_BASE_CPP) qt/safeminemore.cpp $(BITCOIN_QT_WINDOWS_CPP) $(BITCOIN_QT_WALLET_CPP) $(BITCOIN_QT_H) $(BITCOIN_MM)
 	@test -n $(LUPDATE) || echo "lupdate is required for updating translations"
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -I$(srcdir) -locations relative -no-obsolete -ts $(srcdir)/qt/locale/safemine_en.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -I$(srcdir) -locations relative -no-obsolete -ts $(srcdir)/qt/locale/safeminemore_en.ts
 
 $(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
 	@test -f $(RCC)
 	@cp -f $< $(@D)/temp_$(<F)
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) $(RCCFLAGS) -name safemine_locale $(@D)/temp_$(<F) | \
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) $(RCCFLAGS) -name safeminemore_locale $(@D)/temp_$(<F) | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 	@rm $(@D)/temp_$(<F)
 
 $(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_CSS) $(RES_FONTS) $(RES_MOVIES) $(PROTOBUF_H)
 	@test -f $(RCC)
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) $(RCCFLAGS) -name safemine $< | \
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) $(RCCFLAGS) -name safeminemore $< | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 
-CLEAN_QT = $(nodist_qt_libsafemineqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/*.gcno qt/temp_safemine_locale.qrc qt/res/css/colors/*
+CLEAN_QT = $(nodist_qt_libsafeminemoreqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/*.gcno qt/temp_safeminemore_locale.qrc qt/res/css/colors/*
 
 CLEANFILES += $(CLEAN_QT)
 
-safemine_qt_clean: FORCE
-	rm -f $(CLEAN_QT) $(qt_libsafemineqt_a_OBJECTS) $(qt_safemine_qt_OBJECTS) qt/safemine-qt$(EXEEXT) $(LIBBITCOINQT)
+safeminemore_qt_clean: FORCE
+	rm -f $(CLEAN_QT) $(qt_libsafeminemoreqt_a_OBJECTS) $(qt_safeminemore_qt_OBJECTS) qt/safeminemore-qt$(EXEEXT) $(LIBBITCOINQT)
 
-safemine_qt : qt/safemine-qt$(EXEEXT)
+safeminemore_qt : qt/safeminemore-qt$(EXEEXT)
 
 ui_%.h: %.ui
 	@test -f $(UIC)

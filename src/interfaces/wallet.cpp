@@ -56,41 +56,41 @@ public:
 };
 
 //! Construct wallet tx struct.
-WalletTx MakeWalletTx(CWallet& wallet, const CWalletTx& wtx)
+shared_ptr<WalletTx> MakeWalletTx(CWallet& wallet, const CWalletTx& wtx)
 {
-    WalletTx result;
+    shared_ptr<WalletTx> result(new WalletTx);
     bool fInputDenomFound{false}, fOutputDenomFound{false};
-    result.tx = wtx.tx;
-    result.txin_is_mine.reserve(wtx.tx->vin.size());
+    result->tx = wtx.tx;
+    result->txin_is_mine.reserve(wtx.tx->vin.size());
     for (const auto& txin : wtx.tx->vin) {
-        result.txin_is_mine.emplace_back(wallet.IsMine(txin));
-        if (!fInputDenomFound && result.txin_is_mine.back() && wallet.IsDenominated(txin.prevout)) {
+        result->txin_is_mine.emplace_back(wallet.IsMine(txin));
+        if (!fInputDenomFound && result->txin_is_mine.back() && wallet.IsDenominated(txin.prevout)) {
             fInputDenomFound = true;
         }
     }
-    result.txout_is_mine.reserve(wtx.tx->vout.size());
-    result.txout_address.reserve(wtx.tx->vout.size());
-    result.txout_address_is_mine.reserve(wtx.tx->vout.size());
+    result->txout_is_mine.reserve(wtx.tx->vout.size());
+    result->txout_address.reserve(wtx.tx->vout.size());
+    result->txout_address_is_mine.reserve(wtx.tx->vout.size());
     for (const auto& txout : wtx.tx->vout) {
-        result.txout_is_mine.emplace_back(wallet.IsMine(txout));
-        result.txout_address.emplace_back();
-        result.txout_address_is_mine.emplace_back(ExtractDestination(txout.scriptPubKey, result.txout_address.back()) ?
-                                                      IsMine(wallet, result.txout_address.back()) :
+        result->txout_is_mine.emplace_back(wallet.IsMine(txout));
+        result->txout_address.emplace_back();
+        result->txout_address_is_mine.emplace_back(ExtractDestination(txout.scriptPubKey, result->txout_address.back()) ?
+                                                      IsMine(wallet, result->txout_address.back()) :
                                                       ISMINE_NO);
-        if (!fOutputDenomFound && result.txout_address_is_mine.back() && CCoinJoin::IsDenominatedAmount(txout.nValue)) {
+        if (!fOutputDenomFound && result->txout_address_is_mine.back() && CCoinJoin::IsDenominatedAmount(txout.nValue)) {
             fOutputDenomFound = true;
         }
     }
-    result.credit = wtx.GetCredit(ISMINE_ALL);
-    result.debit = wtx.GetDebit(ISMINE_ALL);
-    result.change = wtx.GetChange();
-    result.time = wtx.GetTxTime();
-    result.value_map = wtx.mapValue;
-    result.is_coinbase = wtx.IsCoinBase();
+    result->credit = wtx.GetCredit(ISMINE_ALL);
+    result->debit = wtx.GetDebit(ISMINE_ALL);
+    result->change = wtx.GetChange();
+    result->time = wtx.GetTxTime();
+    result->value_map = wtx.mapValue;
+    result->is_coinbase = wtx.IsCoinBase();
     // The determination of is_denominate is based on simplified checks here because in this part of the code
     // we only want to know about mixing transactions belonging to this specific wallet.
-    result.is_denominate = wtx.tx->vin.size() == wtx.tx->vout.size() && // Number of inputs is same as number of outputs
-                           (result.credit - result.debit) == 0 && // Transaction pays no tx fee
+    result->is_denominate = wtx.tx->vin.size() == wtx.tx->vout.size() && // Number of inputs is same as number of outputs
+                           (result->credit - result->debit) == 0 && // Transaction pays no tx fee
                            fInputDenomFound && fOutputDenomFound; // At least 1 input and 1 output are denominated belonging to the provided wallet
     return result;
 }
@@ -173,6 +173,7 @@ public:
 class WalletImpl : public Wallet
 {
 public:
+    unordered_lru_cache<uint256, shared_ptr<WalletTx>, std::hash<uint256>, 10000> m_WalletTxCache;
     CoinJoinImpl m_coinjoin;
 
     WalletImpl(const std::shared_ptr<CWallet>& wallet) : m_shared_wallet(wallet), m_wallet(*wallet.get()), m_coinjoin(*wallet.get()) {}
@@ -287,13 +288,15 @@ public:
         bool sign,
         int& change_pos,
         CAmount& fee,
-        std::string& fail_reason) override
+        std::string& fail_reason,
+        int nExtraPayloadSize = 0,
+        FuturePartialPayload* fpp = nullptr) override
     {
         LOCK2(cs_main, mempool.cs);
         LOCK(m_wallet.cs_wallet);
         auto pending = MakeUnique<PendingWalletTxImpl>(m_wallet);
         if (!m_wallet.CreateTransaction(recipients, pending->m_tx, pending->m_key, fee, change_pos,
-                fail_reason, coin_control, sign)) {
+                fail_reason, coin_control, sign, nExtraPayloadSize, fpp)) {
             return {};
         }
         return std::move(pending);
@@ -313,22 +316,32 @@ public:
         }
         return {};
     }
-    WalletTx getWalletTx(const uint256& txid) override
+    shared_ptr<WalletTx> getWalletTx(const uint256& txid) override
     {
         LOCK2(::cs_main, m_wallet.cs_wallet);
         auto mi = m_wallet.mapWallet.find(txid);
         if (mi != m_wallet.mapWallet.end()) {
-            return MakeWalletTx(m_wallet, mi->second);
+            shared_ptr<WalletTx> tx;
+            if (!m_WalletTxCache.get(mi->first, tx)) {
+               tx = MakeWalletTx(m_wallet, mi->second);
+               m_WalletTxCache.insert(mi->first, tx);
+            }
+            return tx;
         }
         return {};
     }
-    std::vector<WalletTx> getWalletTxs() override
+    std::vector<shared_ptr<WalletTx>> getWalletTxs() override
     {
         LOCK2(::cs_main, m_wallet.cs_wallet);
-        std::vector<WalletTx> result;
+        std::vector<shared_ptr<WalletTx>> result;
         result.reserve(m_wallet.mapWallet.size());
         for (const auto& entry : m_wallet.mapWallet) {
-            result.emplace_back(MakeWalletTx(m_wallet, entry.second));
+            shared_ptr<WalletTx> tx;
+            if (!m_WalletTxCache.get(entry.first, tx)) {
+               tx = MakeWalletTx(m_wallet, entry.second);
+               m_WalletTxCache.insert(entry.first, tx);
+            }
+            result.emplace_back(tx);
         }
         return result;
     }
@@ -352,7 +365,7 @@ public:
         tx_status = MakeWalletTxStatus(mi->second);
         return true;
     }
-    WalletTx getWalletTxDetails(const uint256& txid,
+    shared_ptr<WalletTx> getWalletTxDetails(const uint256& txid,
         WalletTxStatus& tx_status,
         WalletOrderForm& order_form,
         bool& in_mempool,
@@ -388,6 +401,47 @@ public:
         }
         return result;
     }
+
+    std::map<CTxDestination, CAmount> GetAddressBalances() override
+    {
+        std::map<CTxDestination, CAmount> balances;
+
+        {
+            LOCK2(::cs_main, m_wallet.cs_wallet);
+            for (const auto& walletEntry : m_wallet.mapWallet)
+            {
+                const CWalletTx *pcoin = &walletEntry.second;
+
+                if (!pcoin->IsTrusted())
+                    continue;
+
+                if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
+                    continue;
+
+                int nDepth = pcoin->GetDepthInMainChain();
+                if ((nDepth < (pcoin->IsFromMe(ISMINE_ALL) ? 0 : 1)) && !pcoin->IsLockedByInstantSend())
+                    continue;
+
+                for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++)
+                {
+                    CTxDestination addr;
+                    if (!m_wallet.IsMine(pcoin->tx->vout[i]))
+                        continue;
+                    if(!ExtractDestination(pcoin->tx->vout[i].scriptPubKey, addr))
+                        continue;
+
+                    CAmount n = m_wallet.IsSpent(walletEntry.first, i) ? 0 : pcoin->tx->vout[i].nValue;
+
+                    if (!balances.count(addr))
+                        balances[addr] = 0;
+                    balances[addr] += n;
+                }
+            }
+        }
+
+        return balances;
+    }
+
     bool tryGetBalances(WalletBalances& balances, int& num_blocks) override
     {
         TRY_LOCK(cs_main, locked_chain);
@@ -520,6 +574,11 @@ public:
     std::unique_ptr<Handler> handleWatchOnlyChanged(WatchOnlyChangedFn fn) override
     {
         return MakeHandler(m_wallet.NotifyWatchonlyChanged.connect(fn));
+    }
+    std::unique_ptr<Handler> handleBlockNotifyTip(BlockNotifyTipFn fn) override
+    {
+        return MakeHandler(::uiInterface.BlockNotifyTip.connect([fn](bool initial_download, const CBlockIndex* block) {
+            fn(initial_download, block->nHeight);}));
     }
 
     std::shared_ptr<CWallet> m_shared_wallet;

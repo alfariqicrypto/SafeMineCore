@@ -5,44 +5,44 @@ and tests weren't explicitly disabled.
 
 After configuring, they can be run with `make check`.
 
-To run the safemined tests manually, launch `src/test/test_safemine`. To recompile
+To run the safeminemored tests manually, launch `src/test/test_safeminemore`. To recompile
 after a test file was modified, run `make` and then run the test again. If you
 modify a non-test file, use `make -C src/test` to recompile only what's needed
-to run the safemined tests.
+to run the safeminemored tests.
 
-To add more safemined tests, add `BOOST_AUTO_TEST_CASE` functions to the existing
+To add more safeminemored tests, add `BOOST_AUTO_TEST_CASE` functions to the existing
 .cpp files in the `test/` directory or add new .cpp files that
 implement new BOOST_AUTO_TEST_SUITE sections.
 
-To run the safemine-qt tests manually, launch `src/qt/test/test_safemine-qt`
+To run the safeminemore-qt tests manually, launch `src/qt/test/test_safeminemore-qt`
 
-To add more safemine-qt tests, add them to the `src/qt/test/` directory and
+To add more safeminemore-qt tests, add them to the `src/qt/test/` directory and
 the `src/qt/test/test_main.cpp` file.
 
 ### Running individual tests
 
-test_safemine has some built-in command-line arguments; for
+test_safeminemore has some built-in command-line arguments; for
 example, to run just the getarg_tests verbosely:
 
-    test_safemine --log_level=all --run_test=getarg_tests
+    test_safeminemore --log_level=all --run_test=getarg_tests
 
-... or to run just the doublesafemine test:
+... or to run just the doublesafeminemore test:
 
-    test_safemine --run_test=getarg_tests/doublesafemine
+    test_safeminemore --run_test=getarg_tests/doublesafeminemore
 
-Run `test_safemine --help` for the full list.
+Run `test_safeminemore --help` for the full list.
 
 ### Note on adding test cases
 
 The sources in this directory are unit test cases.  Boost includes a
-unit testing framework, and since SafeMine Core already uses boost, it makes
+unit testing framework, and since Safeminemore Core already uses boost, it makes
 sense to simply use this framework rather than require developers to
 configure some other framework (we want as few impediments to creating
 unit tests as possible).
 
-The build system is setup to compile an executable called `test_safemine`
+The build system is setup to compile an executable called `test_safeminemore`
 that runs all of the unit tests.  The main source file is called
-test_safemine.cpp. To add a new unit test file to our test suite you need
+test_safeminemore.cpp. To add a new unit test file to our test suite you need
 to add the file to `src/Makefile.test.include`. The pattern is to create
 one test file for each class or source file for which you want to create
 unit tests.  The file naming convention is `<source_filename>_tests.cpp`

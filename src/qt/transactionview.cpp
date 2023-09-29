@@ -72,7 +72,6 @@ TransactionView::TransactionView(QWidget* parent) :
     dateWidget->addItem(tr("Last month"), LastMonth);
     dateWidget->addItem(tr("This year"), ThisYear);
     dateWidget->addItem(tr("Range..."), Range);
-    dateWidget->setCurrentIndex(settings.value("transactionDate").toInt());
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
@@ -83,6 +82,10 @@ TransactionView::TransactionView(QWidget* parent) :
                                         TransactionFilterProxy::TYPE(TransactionRecord::RecvFromOther));
     typeWidget->addItem(tr("Sent to"), TransactionFilterProxy::TYPE(TransactionRecord::SendToAddress) |
                                   TransactionFilterProxy::TYPE(TransactionRecord::SendToOther));
+    typeWidget->addItem(tr("Future"), TransactionFilterProxy::TYPE(TransactionRecord::FutureSend) |
+                                    TransactionFilterProxy::TYPE(TransactionRecord::FutureReceive));
+    typeWidget->addItem(tr("Future Send"), TransactionFilterProxy::TYPE(TransactionRecord::FutureSend));
+    typeWidget->addItem(tr("Future Received"), TransactionFilterProxy::TYPE(TransactionRecord::FutureReceive));
     typeWidget->addItem(tr("%1 Send").arg("CoinJoin"), TransactionFilterProxy::TYPE(TransactionRecord::CoinJoinSend));
     typeWidget->addItem(tr("%1 Make Collateral Inputs").arg("CoinJoin"), TransactionFilterProxy::TYPE(TransactionRecord::CoinJoinMakeCollaterals));
     typeWidget->addItem(tr("%1 Create Denominations").arg("CoinJoin"), TransactionFilterProxy::TYPE(TransactionRecord::CoinJoinCreateDenominations));
@@ -91,8 +94,7 @@ TransactionView::TransactionView(QWidget* parent) :
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(TransactionRecord::SendToSelf));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(TransactionRecord::Generated));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(TransactionRecord::Other));
-    typeWidget->setCurrentIndex(settings.value("transactionType").toInt());
-
+    
     hlayout->addWidget(typeWidget);
 
     search_widget = new QLineEdit(this);
@@ -263,6 +265,9 @@ void TransactionView::setModel(WalletModel *_model)
         chooseDate(settings.value("transactionDate").toInt());
 
         updateCoinJoinVisibility();
+
+        dateWidget->setCurrentIndex(settings.value("transactionDate").toInt());
+        typeWidget->setCurrentIndex(settings.value("transactionType").toInt());
     }
 }
 
@@ -542,7 +547,7 @@ void TransactionView::showAddressQRCode()
     QRDialog* dialog = new QRDialog(this);
 
     dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setInfo(tr("QR code"), "safemine:"+strAddress, "", strAddress);
+    dialog->setInfo(tr("QR code"), "safeminemore:"+strAddress, "", strAddress);
     dialog->show();
 }
 

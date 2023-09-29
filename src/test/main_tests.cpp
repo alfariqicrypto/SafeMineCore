@@ -4,7 +4,7 @@
 
 #include <net.h>
 
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <boost/signals2/signal.hpp>
 #include <boost/test/unit_test.hpp>

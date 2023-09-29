@@ -9,7 +9,7 @@
 #include <sync.h>
 #include <utilstrencodings.h>
 #include <utilmoneystr.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <stdint.h>
 #include <vector>
@@ -583,7 +583,7 @@ BOOST_AUTO_TEST_CASE(util_GetChainName)
     BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
 
     // check setting the network to test (and thus making
-    // [test] regtest=1 potentially relevant) doesn't break things
+    // [test] regtest=1 potentially relevent) doesn't break things
     test_args.SelectConfigNetwork("test");
 
     test_args.ParseParameters(0, (char**)argv_testnet);
@@ -1099,8 +1099,9 @@ static constexpr char ExitCommand = 'X';
 static void TestOtherProcess(fs::path dirname, std::string lockname, int fd)
 {
     char ch;
+    int rv;
     while (true) {
-        int rv = read(fd, &ch, 1); // Wait for command
+        rv = read(fd, &ch, 1); // Wait for command
         assert(rv == 1);
         switch(ch) {
         case LockCommand:

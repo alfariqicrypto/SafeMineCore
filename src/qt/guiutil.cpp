@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -205,28 +206,8 @@ QString getThemedStyleQString(ThemedStyle style)
 
 QIcon getIcon(const QString& strIcon, const ThemedColor color, const ThemedColor colorAlternative, const QString& strIconPath)
 {
-    QColor qcolor = getThemedQColor(color);
-    QColor qcolorAlternative = getThemedQColor(colorAlternative);
     QIcon icon(strIconPath + strIcon);
-    QIcon themedIcon;
-    for (const QSize& size : icon.availableSizes()) {
-        QImage image(icon.pixmap(size).toImage());
-        image = image.convertToFormat(QImage::Format_ARGB32);
-        for (int x = 0; x < image.width(); ++x) {
-            for (int y = 0; y < image.height(); ++y) {
-                const QRgb rgb = image.pixel(x, y);
-                QColor* pColor;
-                if ((rgb & RGB_MASK) < RGB_HALF) {
-                    pColor = &qcolor;
-                } else {
-                    pColor = &qcolorAlternative;
-                }
-                image.setPixel(x, y, qRgba(pColor->red(), pColor->green(), pColor->blue(), qAlpha(rgb)));
-            }
-        }
-        themedIcon.addPixmap(QPixmap::fromImage(image));
-    }
-    return themedIcon;
+    return icon;
 }
 
 QIcon getIcon(const QString& strIcon, const ThemedColor color, const QString& strIconPath)
@@ -279,11 +260,12 @@ void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent, bool fAllow
 
     // We don't want translators to use own addresses in translations
     // and this is the only place, where this address is supplied.
-    widget->setPlaceholderText(QObject::tr("Enter a SafeMine address (e.g. %1)").arg(
+    widget->setPlaceholderText(QObject::tr("Enter a Safeminemore address (e.g. %1)").arg(
         QString::fromStdString(DummyAddress(Params()))));
     widget->setValidator(new BitcoinAddressEntryValidator(parent, fAllowURI));
     widget->setCheckValidator(new BitcoinAddressCheckValidator(parent));
 }
+
 
 void setupAppearance(QWidget* parent, OptionsModel* model)
 {
@@ -292,7 +274,7 @@ void setupAppearance(QWidget* parent, OptionsModel* model)
         QDialog dlg(parent);
         dlg.setObjectName("AppearanceSetup");
         dlg.setWindowTitle(QObject::tr("Appearance Setup"));
-        dlg.setWindowIcon(QIcon(":icons/safemine"));
+        dlg.setWindowIcon(QIcon(":icons/safeminemore"));
         // And the widgets we add to it
         QLabel lblHeading(QObject::tr("Please choose your preferred settings for the appearance of %1").arg(QObject::tr(PACKAGE_NAME)), &dlg);
         lblHeading.setObjectName("lblHeading");
@@ -329,8 +311,8 @@ void setupAppearance(QWidget* parent, OptionsModel* model)
 
 bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
 {
-    // return if URI is not valid or is no safemine: URI
-    if(!uri.isValid() || uri.scheme() != QString("safemine"))
+    // return if URI is not valid or is no safeminemore: URI
+    if(!uri.isValid() || uri.scheme() != QString("safeminemore"))
         return false;
 
     SendCoinsRecipient rv;
@@ -372,7 +354,7 @@ bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
         {
             if(!i->second.isEmpty())
             {
-                if(!BitcoinUnits::parse(BitcoinUnits::SMX, i->second, &rv.amount))
+                if(!BitcoinUnits::parse(BitcoinUnits::SM2R, i->second, &rv.amount))
                 {
                     return false;
                 }
@@ -404,12 +386,12 @@ bool validateBitcoinURI(const QString& uri)
 
 QString formatBitcoinURI(const SendCoinsRecipient &info)
 {
-    QString ret = QString("safemine:%1").arg(info.address);
+    QString ret = QString("safeminemore:%1").arg(info.address);
     int paramCount = 0;
 
     if (info.amount)
     {
-        ret += QString("?amount=%1").arg(BitcoinUnits::format(BitcoinUnits::SMX, info.amount, false, BitcoinUnits::separatorNever));
+        ret += QString("?amount=%1").arg(BitcoinUnits::format(BitcoinUnits::SM2R, info.amount, false, BitcoinUnits::separatorNever));
         paramCount++;
     }
 
@@ -610,7 +592,7 @@ void openConfigfile()
 {
     fs::path pathConfig = GetConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME));
 
-    /* Open safemine.conf with the associated application */
+    /* Open safeminemore.conf with the associated application */
     if (fs::exists(pathConfig))
         QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
@@ -771,15 +753,15 @@ fs::path static StartupShortcutPath()
 {
     std::string chain = gArgs.GetChainName();
     if (chain == CBaseChainParams::MAIN)
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "SafeMine Core.lnk";
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Safeminemore Core.lnk";
     if (chain == CBaseChainParams::TESTNET) // Remove this special case when CBaseChainParams::TESTNET = "testnet4"
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "SafeMine Core (testnet).lnk";
-    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("SafeMine Core (%s).lnk", chain);
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Safeminemore Core (testnet).lnk";
+    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Safeminemore Core (%s).lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
 {
-    // check for "SafeMine Core*.lnk"
+    // check for "Safeminemore Core*.lnk"
     return fs::exists(StartupShortcutPath());
 }
 
@@ -869,8 +851,8 @@ fs::path static GetAutostartFilePath()
 {
     std::string chain = gArgs.GetChainName();
     if (chain == CBaseChainParams::MAIN)
-        return GetAutostartDir() / "safemine.desktop";
-    return GetAutostartDir() / strprintf("safemine-%s.lnk", chain);
+        return GetAutostartDir() / "safeminemorecore.desktop";
+    return GetAutostartDir() / strprintf("safeminemorecore-%s.lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
@@ -910,13 +892,13 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         if (!optionFile.good())
             return false;
         std::string chain = gArgs.GetChainName();
-        // Write a safemine.desktop file to the autostart directory:
+        // Write a safeminemorecore.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
         if (chain == CBaseChainParams::MAIN)
-            optionFile << "Name=SafeMine Core\n";
+            optionFile << "Name=Safeminemore Core\n";
         else
-            optionFile << strprintf("Name=SafeMine Core (%s)\n", chain);
+            optionFile << strprintf("Name=Safeminemore Core (%s)\n", chain);
         optionFile << "Exec=" << pszExePath << strprintf(" -min -testnet=%d -regtest=%d\n", gArgs.GetBoolArg("-testnet", false), gArgs.GetBoolArg("-regtest", false));
         optionFile << "Terminal=false\n";
         optionFile << "Hidden=false\n";
@@ -937,7 +919,7 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
         return nullptr;
     }
 
-    // loop through the list of startup items and try to find the SafeMine Core app
+    // loop through the list of startup items and try to find the Safeminemore Core app
     for(int i = 0; i < CFArrayGetCount(listSnapshot); i++) {
         LSSharedFileListItemRef item = (LSSharedFileListItemRef)CFArrayGetValueAtIndex(listSnapshot, i);
         UInt32 resolutionFlags = kLSSharedFileListNoUserInteraction | kLSSharedFileListDoNotMountVolumes;
@@ -994,7 +976,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, bitcoinAppUrl);
 
     if(fAutoStart && !foundItem) {
-        // add SafeMine Core app to startup item list
+        // add Safeminemore Core app to startup item list
         LSSharedFileListInsertItemURL(loginItems, kLSSharedFileListItemBeforeFirst, nullptr, nullptr, bitcoinAppUrl, nullptr, nullptr);
     }
     else if(!fAutoStart && foundItem) {
@@ -1136,7 +1118,7 @@ void loadStyleSheet(bool fForceUpdate)
 
         std::vector<QString> vecFiles;
         // If light/dark theme is used load general styles first
-        if (safemineThemeActive()) {
+        if (safeminemoreThemeActive()) {
             vecFiles.push_back(pathToFile(generalTheme));
         }
         vecFiles.push_back(pathToFile(getActiveTheme()));
@@ -1723,7 +1705,7 @@ QString getActiveTheme()
     return theme;
 }
 
-bool safemineThemeActive()
+bool safeminemoreThemeActive()
 {
     QSettings settings;
     QString theme = settings.value("theme", defaultTheme).toString();
@@ -1742,7 +1724,7 @@ void disableMacFocusRect(const QWidget* w)
 #ifdef Q_OS_MAC
     for (const auto& c : w->findChildren<QWidget*>()) {
         if (c->testAttribute(Qt::WA_MacShowFocusRect)) {
-            c->setAttribute(Qt::WA_MacShowFocusRect, !safemineThemeActive());
+            c->setAttribute(Qt::WA_MacShowFocusRect, !safeminemoreThemeActive());
             setRectsDisabled.emplace(c);
         }
     }
@@ -1756,7 +1738,7 @@ void updateMacFocusRects()
     auto it = setRectsDisabled.begin();
     while (it != setRectsDisabled.end()) {
         if (allWidgets.contains(*it)) {
-            (*it)->setAttribute(Qt::WA_MacShowFocusRect, !safemineThemeActive());
+            (*it)->setAttribute(Qt::WA_MacShowFocusRect, !safeminemoreThemeActive());
             ++it;
         } else {
             it = setRectsDisabled.erase(it);

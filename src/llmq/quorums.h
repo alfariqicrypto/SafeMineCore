@@ -1,4 +1,5 @@
 // Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -46,7 +47,7 @@ public:
         QUORUM_TYPE_INVALID = 0x01,
         QUORUM_BLOCK_NOT_FOUND = 0x02,
         QUORUM_NOT_FOUND = 0x03,
-        MASTERNODE_IS_NO_MEMBER = 0x04,
+        SMARTNODE_IS_NO_MEMBER = 0x04,
         QUORUM_VERIFICATION_VECTOR_MISSING = 0x05,
         ENCRYPTED_CONTRIBUTIONS_MISSING = 0x06,
         UNDEFINED = 0xFF,
@@ -236,7 +237,7 @@ private:
     bool BuildQuorumContributions(const CFinalCommitment& fqc, std::shared_ptr<CQuorum>& quorum) const;
 
     CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const CBlockIndex* pindex) const;
-    /// Returns the start offset for the masternode with the given proTxHash. This offset is applied when picking data recovery members of a quorum's
+    /// Returns the start offset for the smartnode with the given proTxHash. This offset is applied when picking data recovery members of a quorum's
     /// memberlist and is calculated based on a list of all member of all active quorums for the given llmqType in a way that each member
     /// should receive the same number of request if all active llmqType members requests data from one llmqType quorum.
     size_t GetQuorumRecoveryStartOffset(const CQuorumCPtr pQuorum, const CBlockIndex* pIndex) const;

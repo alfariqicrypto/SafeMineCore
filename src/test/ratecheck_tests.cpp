@@ -1,9 +1,9 @@
 // Copyright (c) 2014-2020 The Dash Core developers
-// Copyright (c) 2021 The SafeMine Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 
 #include <governance/governance.h>
 
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <boost/test/unit_test.hpp>
 

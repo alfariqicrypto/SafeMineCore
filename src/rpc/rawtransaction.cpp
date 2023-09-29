@@ -1,6 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -33,6 +34,9 @@
 #include <evo/specialtx.h>
 #include <evo/providertx.h>
 #include <evo/cbtx.h>
+#include <rpc/specialtx_utilities.h>
+#include <future/utils.h>
+#include <future/fee.h>
 
 #include <llmq/quorums_chainlocks.h>
 #include <llmq/quorums_commitment.h>
@@ -40,7 +44,6 @@
 
 #include <future>
 #include <stdint.h>
-
 #include <univalue.h>
 
 
@@ -154,7 +157,7 @@ UniValue getrawtransaction(const JSONRPCRequest& request)
             "         \"reqSigs\" : n,            (numeric) The required sigs\n"
             "         \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
             "         \"addresses\" : [           (json array of string)\n"
-            "           \"address\"        (string) safemine address\n"
+            "           \"address\"        (string) safeminemore address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -397,8 +400,17 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "2. \"outputs\"               (array, required) a json array with outputs (key-value pairs)\n"
             "   [\n"
             "    {\n"
-            "      \"address\": x.xxx,    (obj, optional) A key-value pair. The key (string) is the safemine address, the value (float or string) is the amount in " + CURRENCY_UNIT + "\n"
+            "      \"address\": x.xxx,    (obj, optional) A key-value pair. The key (string) is the safeminemore address, the value (float or string) is the amount in " + CURRENCY_UNIT + "\n"
             "    },\n"
+            "    {\n"
+            "      \"address\":           (obj, optional) A key-value pair. The key (string) is the safeminemore address, value is a json string, numberic pair for future_maturity, future_locktime, and future_amount\n"
+            "                                   There can only one address contain future information. A future transaction is mature when there is enough confiration (future_maturity) or time (future_locktime)\n"
+            "        {\n"
+            "           \"future_maturity\":n, (numeric, required) number of confirmation for this future to mature.\n"
+            "           \"future_locktime\":n  (numeric, required) total time in seconds from its first confirmation for this future to mature\n"
+            "           \"future_amount\":n    (numeric, required) safeminemore amount to be locked\n"
+            "         }\n"
+            "    },\n"                                                                                                                                                                                                                                                                                                                                              "    },\n"
             "    {\n"
             "      \"data\": \"hex\"        (obj, optional) A key-value pair. The key must be \"data\", the value is hex encoded data\n"
             "    }\n"
@@ -474,6 +486,8 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
     }
 
     std::set<CTxDestination> destinations;
+    bool hasFuture = false;
+    CFutureTx ftx;
     if (!outputs_is_obj) {
         // Translate array of key-value pairs into dict
         UniValue outputs_dict = UniValue(UniValue::VOBJ);
@@ -498,7 +512,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
         } else {
             CTxDestination destination = DecodeDestination(name_);
             if (!IsValidDestination(destination)) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid SafeMine address: ") + name_);
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Safeminemore address: ") + name_);
             }
 
             if (!destinations.insert(destination).second) {
@@ -506,13 +520,43 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             }
 
             CScript scriptPubKey = GetScriptForDestination(destination);
-            CAmount nAmount = AmountFromValue(outputs[name_]);
-
+            UniValue sendToValue = outputs[name_];
+            CAmount nAmount;
+            if(sendToValue.isObject()) {
+                if(hasFuture) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("can only send future to one address"));
+                }
+                if(sendToValue["future_maturity"].isNull()) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("no future_maturity is specified "));
+                }
+                if(sendToValue["future_locktime"].isNull()) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("no future_locktime is specified "));
+                }
+                if(sendToValue["future_amount"].isNull()) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("no future_amount is specified "));
+                }
+                hasFuture = true;
+                nAmount = AmountFromValue(sendToValue["future_amount"]);
+                nAmount = AmountFromValue(sendToValue["future_amount"]);
+                ftx.lockOutputIndex = rawTx.vout.size();
+                ftx.nVersion = CFutureTx::CURRENT_VERSION;
+                ftx.maturity = sendToValue["future_maturity"].get_int();
+                ftx.lockTime = sendToValue["future_locktime"].get_int();
+                ftx.fee = getFutureFees();
+                ftx.updatableByDestination = false;
+                rawTx.nType = TRANSACTION_FUTURE;
+                rawTx.nVersion = 3;
+            } else {
+                nAmount = AmountFromValue(sendToValue);
+            }
             CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         }
     }
-
+    if(hasFuture) {
+        UpdateSpecialTxInputsHash(rawTx, ftx);
+        SetTxPayload(rawTx, ftx);
+    }
     return EncodeHexTx(rawTx);
 }
 
@@ -555,7 +599,7 @@ UniValue decoderawtransaction(const JSONRPCRequest& request)
             "         \"reqSigs\" : n,            (numeric) The required sigs\n"
             "         \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
             "         \"addresses\" : [           (json array of string)\n"
-            "           \"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\"   (string) SafeMine address\n"
+            "           \"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\"   (string) Safeminemore address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -600,7 +644,7 @@ UniValue decodescript(const JSONRPCRequest& request)
             "  \"type\":\"type\", (string) The output type\n"
             "  \"reqSigs\": n,    (numeric) The required signatures\n"
             "  \"addresses\": [   (json array of string)\n"
-            "     \"address\"     (string) safemine address\n"
+            "     \"address\"     (string) safeminemore address\n"
             "     ,...\n"
             "  ],\n"
             "  \"p2sh\",\"address\" (string) address of P2SH script wrapping this redeem script (not returned if the script is already a P2SH).\n"
@@ -796,6 +840,7 @@ UniValue SignTransaction(CMutableTransaction& mtx, const UniValue& prevTxsUnival
                     newcoin.out.nValue = AmountFromValue(find_value(prevOut, "amount"));
                 }
                 newcoin.nHeight = 1;
+                maybeSetPayload(newcoin, out, mtx.nType, mtx.vExtraPayload);
                 view.AddCoin(out, std::move(newcoin), true);
             }
 
@@ -1030,7 +1075,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
 
     if (!IsDeprecatedRPCEnabled("signrawtransaction")) {
         throw JSONRPCError(RPC_METHOD_DEPRECATED, "signrawtransaction is deprecated and will be fully removed in v0.18. "
-            "To use signrawtransaction in v0.17, restart safemined with -deprecatedrpc=signrawtransaction.\n"
+            "To use signrawtransaction in v0.17, restart safeminemored with -deprecatedrpc=signrawtransaction.\n"
             "Projects should transition to using signrawtransactionwithkey and signrawtransactionwithwallet before upgrading to v0.18");
     }
 
@@ -1149,7 +1194,6 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
     }
 
     } // cs_main
-
     promise.get_future().wait();
 
     if(!g_connman)

@@ -64,6 +64,7 @@ private:
     Ui::ReceiveRequestDialog *ui;
     WalletModel *model;
     SendCoinsRecipient info;
+    SendFuturesRecipient _info;
 };
 
 #endif // BITCOIN_QT_RECEIVEREQUESTDIALOG_H

@@ -1,13 +1,21 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <llmq/quorums_commitment.h>
 
 #include <chainparams.h>
+#include <spork.h>
 #include <validation.h>
 
 #include <evo/specialtx.h>
+
+bool IsBlsSigCheckEnabled(int64_t blockTime)
+{
+    int64_t activeTime = sporkManager.GetSporkValue(SPORK_17_QUORUM_DKG_ENABLED);
+    return blockTime >= activeTime;
+}
 
 namespace llmq
 {
@@ -78,7 +86,7 @@ bool CFinalCommitment::Verify(const CBlockIndex* pQuorumIndex, bool checkSigs) c
     }
 
     // sigs are only checked when the block is processed
-    if (checkSigs) {
+    if (checkSigs && IsBlsSigCheckEnabled(pQuorumIndex->GetBlockTime())) {
         uint256 commitmentHash = CLLMQUtils::BuildCommitmentHash(params.type, quorumHash, validMembers, quorumPublicKey, quorumVvecHash);
 
         std::vector<CBLSPublicKey> memberPubKeys;
@@ -121,11 +129,11 @@ bool CFinalCommitment::VerifyNull() const
 bool CFinalCommitment::VerifySizes(const Consensus::LLMQParams& params) const
 {
     if (signers.size() != params.size) {
-        LogPrintfFinalCommitment("invalid signers.size=%d\n", signers.size());
+        LogPrintfFinalCommitment("invalid signers.size=%d, params.size=%d params_name=%s\n", signers.size(), params.size,params.name);
         return false;
     }
     if (validMembers.size() != params.size) {
-        LogPrintfFinalCommitment("invalid signers.size=%d\n", signers.size());
+        LogPrintfFinalCommitment("invalid validMembers.size=%d, params.size=%d\n", validMembers.size(), params.size);
         return false;
     }
     return true;
@@ -158,6 +166,7 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
     }
 
     if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)qcTx.commitment.llmqType)) {
+    	std::cout << "qcTx.commitment.llmqType " << qcTx.commitment.llmqType << endl;
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-type");
     }
 

@@ -1,4 +1,5 @@
 // Copyright (c) 2019-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,7 +11,7 @@
 template<typename Key, typename Value, typename Hasher, size_t MaxSize = 0, size_t TruncateThreshold = 0>
 class unordered_lru_cache
 {
-private:
+protected:
     typedef std::unordered_map<Key, std::pair<Value, int64_t>, Hasher> MapType;
 
     MapType cacheMap;
@@ -23,7 +24,7 @@ public:
         maxSize(_maxSize),
         truncateThreshold(_truncateThreshold == 0 ? _maxSize * 2 : _truncateThreshold)
     {
-        // either specify maxSize through template arguments or the contructor and fail otherwise
+        // either specify maxSize through template arguments or the constructor and fail otherwise
         assert(_maxSize != 0);
     }
 
@@ -40,6 +41,16 @@ public:
             it->second.first = std::forward<Value2>(v);
             it->second.second = accessCounter++;
         }
+    }
+
+    void setMaxSize(size_t _maxSize, size_t _truncateThreshold = TruncateThreshold) {
+    	maxSize = _maxSize;
+    	truncateThreshold = _truncateThreshold == 0 ? _maxSize * 2 : _truncateThreshold;
+        assert(_maxSize != 0);
+    }
+
+    size_t getMaxSize() const {
+    	return maxSize;
     }
 
     void emplace(const Key& key, Value&& v)
@@ -81,6 +92,10 @@ public:
     void clear()
     {
         cacheMap.clear();
+    }
+
+    int size() const {
+    	return cacheMap.size();
     }
 
 private:

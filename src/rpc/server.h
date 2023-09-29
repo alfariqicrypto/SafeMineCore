@@ -136,7 +136,7 @@ public:
 };
 
 /**
- * SafeMine RPC command dispatcher.
+ * Safeminemore RPC command dispatcher.
  */
 class CRPCTable
 {

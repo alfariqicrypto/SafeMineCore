@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2020 The Dash Core developers
-// Copyright (c) 2021 The SafeMine Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,13 +10,16 @@
 /* Milliseconds between model updates */
 static const int MODEL_UPDATE_DELAY = 250;
 
+/* Milliseconds between model updates while sync */
+static const int MODEL_UPDATE_DELAY_SYNC = 10000;
+
 /* AskPassphraseDialog -- Maximum passphrase length */
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
-/* SafeMineGUI -- Size of icons in status bar */
+/* SafeminemoreGUI -- Size of icons in status bar */
 static const int STATUSBAR_ICONSIZE = 18;
 
-/* SafeMineGUI -- Size of button icons e.g. in SendCoinEntry or SignVerifyMessageDialog */
+/* SafeminemoreGUI -- Size of button icons e.g. in SendCoinEntry or SignVerifyMessageDialog */
 static const int BUTTON_ICONSIZE = 23;
 
 static const bool DEFAULT_SPLASHSCREEN = true;
@@ -40,13 +43,13 @@ static const int MAX_URI_LENGTH = 255;
 #define QR_IMAGE_SIZE 300
 
 /* Number of frames in spinner animation */
-#define SPINNER_FRAMES 90
+#define SPINNER_FRAMES 36
 
-#define QAPP_ORG_NAME "SafeMine"
-#define QAPP_ORG_DOMAIN "safemine.org"
-#define QAPP_APP_NAME_DEFAULT "SafeMine-Qt"
-#define QAPP_APP_NAME_TESTNET "SafeMine-Qt-testnet"
-#define QAPP_APP_NAME_DEVNET "SafeMine-Qt-%s"
-#define QAPP_APP_NAME_REGTEST "SafeMine-Qt-regtest"
+#define QAPP_ORG_NAME "Safeminemore"
+#define QAPP_ORG_DOMAIN "safeminemore.org"
+#define QAPP_APP_NAME_DEFAULT "Safeminemore-Qt"
+#define QAPP_APP_NAME_TESTNET "Safeminemore-Qt-testnet"
+#define QAPP_APP_NAME_DEVNET "Safeminemore-Qt-%s"
+#define QAPP_APP_NAME_REGTEST "Safeminemore-Qt-regtest"
 
 #endif // BITCOIN_QT_GUICONSTANTS_H

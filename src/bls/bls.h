@@ -1,9 +1,10 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SMX_CRYPTO_BLS_H
-#define SMX_CRYPTO_BLS_H
+#ifndef SAFEMINEMORE_CRYPTO_BLS_H
+#define SAFEMINEMORE_CRYPTO_BLS_H
 
 #include <hash.h>
 #include <serialize.h>
@@ -96,7 +97,7 @@ public:
 
     void Reset()
     {
-        *((C*)this) = C(fLegacy);
+        *(static_cast<C*>(this)) = C(fLegacy);
     }
 
     void SetByteVector(const std::vector<uint8_t>& vecBytes)
@@ -448,4 +449,4 @@ typedef std::shared_ptr<BLSSignatureVector> BLSSignatureVectorPtr;
 
 bool BLSInit();
 
-#endif // SMX_CRYPTO_BLS_H
+#endif // SAFEMINEMORE_CRYPTO_BLS_H

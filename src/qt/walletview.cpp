@@ -85,9 +85,9 @@ WalletView::WalletView(QWidget* parent) :
     addWidget(coinJoinCoinsPage);
 
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeListPage = new MasternodeList();
-        addWidget(masternodeListPage);
+    if (settings.value("fShowSmartnodesTab").toBool()) {
+        smartnodeListPage = new SmartnodeList();
+        addWidget(smartnodeListPage);
     }
 
     // Clicking on a transaction on the overview pre-selects the transaction on the transaction history page
@@ -154,8 +154,8 @@ void WalletView::setClientModel(ClientModel *_clientModel)
     sendCoinsPage->setClientModel(_clientModel);
     coinJoinCoinsPage->setClientModel(_clientModel);
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeListPage->setClientModel(_clientModel);
+    if (settings.value("fShowSmartnodesTab").toBool()) {
+        smartnodeListPage->setClientModel(_clientModel);
     }
 }
 
@@ -167,8 +167,8 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     transactionView->setModel(_walletModel);
     overviewPage->setWalletModel(_walletModel);
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeListPage->setWalletModel(_walletModel);
+    if (settings.value("fShowSmartnodesTab").toBool()) {
+        smartnodeListPage->setWalletModel(_walletModel);
     }
     receiveCoinsPage->setModel(_walletModel);
     sendCoinsPage->setModel(_walletModel);
@@ -239,11 +239,11 @@ void WalletView::gotoHistoryPage()
     setCurrentWidget(transactionsPage);
 }
 
-void WalletView::gotoMasternodePage()
+void WalletView::gotoSmartnodePage()
 {
     QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        setCurrentWidget(masternodeListPage);
+    if (settings.value("fShowSmartnodesTab").toBool()) {
+        setCurrentWidget(smartnodeListPage);
     }
 }
 
@@ -255,7 +255,7 @@ void WalletView::gotoReceiveCoinsPage()
 void WalletView::gotoSendCoinsPage(QString addr)
 {
     setCurrentWidget(sendCoinsPage);
-
+    sendCoinsPage->OnDisplay();
     if (!addr.isEmpty()) {
         sendCoinsPage->setAddress(addr);
     }

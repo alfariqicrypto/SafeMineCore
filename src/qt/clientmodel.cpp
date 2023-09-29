@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -30,6 +31,8 @@
 
 static int64_t nLastHeaderTipUpdateNotification = 0;
 static int64_t nLastBlockTipUpdateNotification = 0;
+static int64_t nLastSmartnodeList = 0;
+static bool ninitialSync = true;
 
 ClientModel::ClientModel(interfaces::Node& node, OptionsModel *_optionsModel, QObject *parent) :
     QObject(parent),
@@ -69,26 +72,26 @@ int ClientModel::getNumConnections(unsigned int flags) const
     return m_node.getNodeCount(connections);
 }
 
-void ClientModel::setMasternodeList(const CDeterministicMNList& mnList)
+void ClientModel::setSmartnodeList(const CDeterministicMNList& mnList)
 {
     LOCK(cs_mnlinst);
     if (mnListCached.GetBlockHash() == mnList.GetBlockHash()) {
         return;
     }
     mnListCached = mnList;
-    Q_EMIT masternodeListChanged();
+    Q_EMIT smartnodeListChanged();
 }
 
-CDeterministicMNList ClientModel::getMasternodeList() const
+CDeterministicMNList ClientModel::getSmartnodeList() const
 {
     LOCK(cs_mnlinst);
     return mnListCached;
 }
 
-void ClientModel::refreshMasternodeList()
+void ClientModel::refreshSmartnodeList()
 {
     LOCK(cs_mnlinst);
-    setMasternodeList(m_node.evo().getListAtChainTip());
+    setSmartnodeList(m_node.evo().getListAtChainTip());
 }
 
 int ClientModel::getHeaderTipHeight() const
@@ -243,6 +246,7 @@ static void BlockTipChanged(ClientModel *clientmodel, bool initialSync, int heig
     // lock free async UI updates in case we have a new block tip
     // during initial sync, only update the UI if the last update
     // was > 250ms (MODEL_UPDATE_DELAY) ago
+    ninitialSync = initialSync;
     int64_t now = 0;
     if (initialSync)
         now = GetTimeMillis();
@@ -267,9 +271,16 @@ static void BlockTipChanged(ClientModel *clientmodel, bool initialSync, int heig
     }
 }
 
-static void NotifyMasternodeListChanged(ClientModel *clientmodel, const CDeterministicMNList& newList)
+static void NotifySmartnodeListChanged(ClientModel *clientmodel, const CDeterministicMNList& newList)
 {
-    clientmodel->setMasternodeList(newList);
+    int64_t now = 0;
+    if (ninitialSync)
+        now = GetTimeMillis();
+
+    if (!ninitialSync || now - nLastSmartnodeList > MODEL_UPDATE_DELAY_SYNC) {
+        clientmodel->setSmartnodeList(newList);
+        nLastSmartnodeList = now;
+    }
 }
 
 static void NotifyAdditionalDataSyncProgressChanged(ClientModel *clientmodel, double nSyncProgress)
@@ -288,7 +299,7 @@ void ClientModel::subscribeToCoreSignals()
     m_handler_banned_list_changed = m_node.handleBannedListChanged(boost::bind(BannedListChanged, this));
     m_handler_notify_block_tip = m_node.handleNotifyBlockTip(boost::bind(BlockTipChanged, this, _1, _2,_3, _4, _5, false));
     m_handler_notify_header_tip = m_node.handleNotifyHeaderTip(boost::bind(BlockTipChanged, this, _1, _2, _3, _4, _5, true));
-    m_handler_notify_masternodelist_changed = m_node.handleNotifyMasternodeListChanged(boost::bind(NotifyMasternodeListChanged, this, _1));
+    m_handler_notify_smartnodelist_changed = m_node.handleNotifySmartnodeListChanged(boost::bind(NotifySmartnodeListChanged, this, _1));
     m_handler_notify_additional_data_sync_progess_changed = m_node.handleNotifyAdditionalDataSyncProgressChanged(boost::bind(NotifyAdditionalDataSyncProgressChanged, this, _1));
 }
 
@@ -302,6 +313,6 @@ void ClientModel::unsubscribeFromCoreSignals()
     m_handler_banned_list_changed->disconnect();
     m_handler_notify_block_tip->disconnect();
     m_handler_notify_header_tip->disconnect();
-    m_handler_notify_masternodelist_changed->disconnect();
+    m_handler_notify_smartnodelist_changed->disconnect();
     m_handler_notify_additional_data_sync_progess_changed->disconnect();
 }

@@ -5,7 +5,7 @@
 #include <util.h>
 
 #include <support/allocators/secure.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <memory>
 

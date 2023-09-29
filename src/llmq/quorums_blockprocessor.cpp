@@ -1,4 +1,5 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -37,10 +38,9 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
         CFinalCommitment qc;
         vRecv >> qc;
 
-        auto hash = ::SerializeHash(qc);
         {
             LOCK(cs_main);
-            EraseObjectRequest(pfrom->GetId(), CInv(MSG_QUORUM_FINAL_COMMITMENT, hash));
+            EraseObjectRequest(pfrom->GetId(), CInv(MSG_QUORUM_FINAL_COMMITMENT, ::SerializeHash(qc)));
         }
 
         if (qc.IsNull()) {
@@ -122,7 +122,7 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, const CBlockIndex*
 {
     AssertLockHeld(cs_main);
 
-    bool fDIP0003Active = pindex->nHeight >= Params().GetConsensus().DIP0003Height;
+    bool fDIP0003Active = Params().GetConsensus().DIP0003Enabled;
     if (!fDIP0003Active) {
         evoDb.Write(DB_BEST_BLOCK_UPGRADE, block.GetHash());
         return true;
@@ -136,8 +136,7 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, const CBlockIndex*
     // The following checks make sure that there is always a (possibly null) commitment while in the mining phase
     // until the first non-null commitment has been mined. After the non-null commitment, no other commitments are
     // allowed, including null commitments.
-    // Note: must only check quorums that were enabled at the _previous_ block height to match mining logic
-    for (const auto& type : CLLMQUtils::GetEnabledQuorumTypes(pindex->pprev)) {
+    for(const auto& type : CLLMQUtils::GetEnabledQuorumTypes(pindex->pprev)) {
         // skip these checks when replaying blocks after the crash
         if (!chainActive.Tip()) {
             break;
@@ -293,8 +292,10 @@ bool CQuorumBlockProcessor::UpgradeDB()
 
     LogPrintf("CQuorumBlockProcessor::%s -- Upgrading DB...\n", __func__);
 
-    if (chainActive.Height() >= Params().GetConsensus().DIP0003EnforcementHeight) {
-        auto pindex = chainActive[Params().GetConsensus().DIP0003EnforcementHeight];
+    //if (chainActive.Height() >= Params().GetConsensus().DIP0003EnforcementHeight) {
+    //    auto pindex = chainActive[Params().GetConsensus().DIP0003EnforcementHeight];
+    if (chainActive.Height() >= 1) {
+           auto pindex = chainActive[1];
         while (pindex) {
             if (fPruneMode && !(pindex->nStatus & BLOCK_HAVE_DATA)) {
                 // Too late, we already pruned blocks we needed to reprocess commitments
@@ -332,8 +333,8 @@ bool CQuorumBlockProcessor::GetCommitmentsFromBlock(const CBlock& block, const C
 {
     AssertLockHeld(cs_main);
 
-    auto& consensus = Params().GetConsensus();
-    bool fDIP0003Active = pindex->nHeight >= consensus.DIP0003Height;
+    const auto& consensus = Params().GetConsensus();
+    bool fDIP0003Active = consensus.DIP0003Enabled;
 
     ret.clear();
 
@@ -347,6 +348,7 @@ bool CQuorumBlockProcessor::GetCommitmentsFromBlock(const CBlock& block, const C
 
             // only allow one commitment per type and per block
             if (ret.count((Consensus::LLMQType)qc.commitment.llmqType)) {
+            	std::cout << "ret.count failed \n";
                 return state.DoS(100, false, REJECT_INVALID, "bad-qc-dup");
             }
 
@@ -483,9 +485,7 @@ std::map<Consensus::LLMQType, std::vector<const CBlockIndex*>> CQuorumBlockProce
         auto& v = ret[p.second.type];
         v.reserve(p.second.signingActiveQuorumCount);
         auto commitments = GetMinedCommitmentsUntilBlock(p.second.type, pindex, p.second.signingActiveQuorumCount);
-        for (auto& c : commitments) {
-            v.emplace_back(c);
-        }
+        std::copy(commitments.begin(), commitments.end(), std::back_inserter(v));
     }
 
     return ret;

@@ -24,11 +24,11 @@
 
 #include <llmq/quorums_instantsend.h>
 
-CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
-                                 int64_t _nTime, unsigned int _entryHeight,
-                                 bool _spendsCoinbase, unsigned int _sigOps, LockPoints lp):
-    tx(_tx), nFee(_nFee), nTime(_nTime), entryHeight(_entryHeight),
-    spendsCoinbase(_spendsCoinbase), sigOpCount(_sigOps), lockPoints(lp)
+#include <future/utils.h>
+
+
+CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee, const CAmount& _specialTxFee, int64_t _nTime, unsigned int _entryHeight, bool _spendsCoinbase, unsigned int _sigOps, LockPoints lp) :
+    tx(_tx), nFee(_nFee), specialTxFee(_specialTxFee) ,nTime(_nTime), entryHeight(_entryHeight), spendsCoinbase(_spendsCoinbase), sigOpCount(_sigOps), lockPoints(lp)
 {
     nTxSize = ::GetSerializeSize(*_tx, SER_NETWORK, PROTOCOL_VERSION);
     nUsageSize = RecursiveDynamicUsage(tx);
@@ -550,6 +550,73 @@ bool CTxMemPool::removeAddressIndex(const uint256 txhash)
     return true;
 }
 
+void CTxMemPool::addFutureIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view)
+{
+    LOCK(cs);
+
+    const CTransaction& tx = entry.GetTx();
+    if (tx.nVersion >= 3 && tx.nType == TRANSACTION_FUTURE)
+    {
+        CFutureTx ftx;
+        if (GetTxPayload(tx.vExtraPayload, ftx))
+        {
+            // TODO: How to handle lockOutputIndex out of range?  Log error and ignore or throw?
+
+            CFutureIndexKey key = CFutureIndexKey(tx.GetHash(), ftx.lockOutputIndex);
+            CTxOut txOut = tx.vout[ftx.lockOutputIndex];
+
+            uint160 addressHash;
+            int addressType;
+            if (txOut.scriptPubKey.IsPayToScriptHash()) {
+                addressHash = uint160(std::vector<unsigned char> (txOut.scriptPubKey.begin()+2, txOut.scriptPubKey.begin()+22));
+                addressType = 2;
+            } else if (txOut.scriptPubKey.IsPayToPublicKeyHash()) {
+                addressHash = uint160(std::vector<unsigned char> (txOut.scriptPubKey.begin()+3, txOut.scriptPubKey.begin()+23));
+                addressType = 1;
+            } else if (txOut.scriptPubKey.IsPayToPublicKey()) {
+                addressHash = Hash160(txOut.scriptPubKey.begin()+1, txOut.scriptPubKey.end()-1);
+                addressType = 1;
+            } else {
+                addressHash.SetNull();
+                addressType = 0;
+            }
+
+            unsigned int toHeight = entry.GetHeight() + ftx.maturity;
+            int64_t      toTime   = GetAdjustedTime() + ftx.lockTime;
+
+            CFutureIndexValue value = CFutureIndexValue(txOut.nValue, addressType, addressHash, entry.GetHeight(), toHeight, toTime);//  txhash, j, -1, prevout.nValue, addressType, addressHash);
+            mapFuture.insert(std::make_pair(key, value));
+            mapFutureInserted.insert(make_pair(tx.GetHash(), key));
+        }
+    }
+}
+
+bool CTxMemPool::getFutureIndex(CFutureIndexKey &key, CFutureIndexValue &value)
+{
+    LOCK(cs);
+
+    mapFutureIndex::iterator it = mapFuture.find(key);
+    if (it != mapFuture.end()) {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
+bool CTxMemPool::removeFutureIndex(const uint256 txhash)
+{
+    LOCK(cs);
+
+    mapFutureIndexInserted::iterator it = mapFutureInserted.find(txhash);
+    if (it != mapFutureInserted.end()) {
+        CFutureIndexKey key = (*it).second;
+            mapFuture.erase(key);
+        mapFutureInserted.erase(it);
+    }
+    return true;
+}
+
+
 void CTxMemPool::addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view)
 {
     LOCK(cs);
@@ -1023,7 +1090,9 @@ static void CheckInputsAndUpdateCoins(const CTransaction& tx, CCoinsViewCache& m
 {
     CValidationState state;
     CAmount txfee = 0;
-    bool fCheckResult = tx.IsCoinBase() || Consensus::CheckTxInputs(tx, state, mempoolDuplicate, spendheight, txfee);
+    CAmount specialTxFee = 0;
+    bool isV17active = Params().IsFutureActive(chainActive.Tip());
+    bool fCheckResult = tx.IsCoinBase() || Consensus::CheckTxInputs(tx, state, mempoolDuplicate, spendheight, txfee, specialTxFee, isV17active, true);
     assert(fCheckResult);
     UpdateCoins(tx, mempoolDuplicate, 1000000);
 }
@@ -1296,7 +1365,7 @@ bool CTxMemPool::existsProviderTxConflict(const CTransaction &tx) const {
         // this method should only be called with validated ProTxs
         auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(proTx.proTxHash);
         if (!dmn) {
-            LogPrint(BCLog::MEMPOOL, "%s: ERROR: Masternode is not in the list, proTxHash: %s\n", __func__, proTx.proTxHash.ToString());
+            LogPrint(BCLog::MEMPOOL, "%s: ERROR: Smartnode is not in the list, proTxHash: %s\n", __func__, proTx.proTxHash.ToString());
             return true; // i.e. failed to find validated ProTx == conflict
         }
         // only allow one operator key change in the mempool
@@ -1318,7 +1387,7 @@ bool CTxMemPool::existsProviderTxConflict(const CTransaction &tx) const {
         // this method should only be called with validated ProTxs
         auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(proTx.proTxHash);
         if (!dmn) {
-            LogPrint(BCLog::MEMPOOL, "%s: ERROR: Masternode is not in the list, proTxHash: %s\n", __func__, proTx.proTxHash.ToString());
+            LogPrint(BCLog::MEMPOOL, "%s: ERROR: Smartnode is not in the list, proTxHash: %s\n", __func__, proTx.proTxHash.ToString());
             return true; // i.e. failed to find validated ProTx == conflict
         }
         // only allow one operator key change in the mempool
@@ -1394,7 +1463,8 @@ bool CCoinsViewMemPool::GetCoin(const COutPoint &outpoint, Coin &coin) const {
     CTransactionRef ptx = mempool.get(outpoint.hash);
     if (ptx) {
         if (outpoint.n < ptx->vout.size()) {
-            coin = Coin(ptx->vout[outpoint.n], MEMPOOL_HEIGHT, false);
+            coin = Coin(ptx->vout[outpoint.n], MEMPOOL_HEIGHT, false, 0, std::vector<uint8_t>());
+            maybeSetPayload(coin, outpoint, ptx.get()->nType, ptx.get()->vExtraPayload);
             return true;
         } else {
             return false;

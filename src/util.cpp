@@ -1,10 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <util.h>
+#include <fs.h>
 
 #include <support/allocators/secure.h>
 #include <chainparamsbase.h>
@@ -75,6 +77,9 @@
 #include <malloc.h>
 #endif
 
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/program_options/detail/config_file.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -82,13 +87,12 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/conf.h>
-#include <thread>
 
 // Application startup time (used for uptime calculation)
 const int64_t nStartupTime = GetTime();
 
-//SafeMine only features
-bool fMasternodeMode = false;
+//Safeminemore only features
+bool fSmartnodeMode = false;
 bool fDisableGovernance = false;
 /**
     nWalletBackups:
@@ -99,8 +103,8 @@ bool fDisableGovernance = false;
 */
 int nWalletBackups = 10;
 
-const char * const BITCOIN_CONF_FILENAME = "safemine.conf";
-const char * const BITCOIN_PID_FILENAME = "safemined.pid";
+const char * const BITCOIN_CONF_FILENAME = "safeminemore.conf";
+const char * const BITCOIN_PID_FILENAME = "safeminemored.pid";
 
 ArgsManager gArgs;
 
@@ -291,7 +295,7 @@ public:
         std::pair<bool,std::string> found_result(false, std::string());
 
         // We pass "true" to GetArgHelper in order to return the last
-        // argument value seen from the command line (so "safemined -foo=bar
+        // argument value seen from the command line (so "safeminemored -foo=bar
         // -foo=baz" gives GetArg(am,"foo")=={true,"baz"}
         found_result = GetArgHelper(am.m_override_args, arg, true);
         if (found_result.first) {
@@ -574,8 +578,8 @@ std::string ArgsManager::GetHelpMessage()
                 usage += HelpMessageGroup("Connection options:");
             else if (last_cat == OptionsCategory::INDEXING)
                 usage += HelpMessageGroup("Indexing options:");
-            else if (last_cat == OptionsCategory::MASTERNODE)
-                usage += HelpMessageGroup("Masternode options:");
+            else if (last_cat == OptionsCategory::SMARTNODE)
+                usage += HelpMessageGroup("Smartnode options:");
             else if (last_cat == OptionsCategory::STATSD)
                 usage += HelpMessageGroup("Statsd options:");
             else if (last_cat == OptionsCategory::ZMQ)
@@ -662,13 +666,13 @@ void PrintExceptionContinue(const std::exception_ptr pex, const char* pszExcepti
 
 fs::path GetDefaultDataDir()
 {
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\SafeMine
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\SafeMine
-    // Mac: ~/Library/Application Support/SafeMine
-    // Unix: ~/.safemine
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\SafeminemoreCore
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\SafeminemoreCore
+    // Mac: ~/Library/Application Support/SafeminemoreCore
+    // Unix: ~/.safeminemorecore
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "SafeMine";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "SafeminemoreCore";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -678,26 +682,24 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/SafeMine";
+    return pathRet / "Library/Application Support/SafeminemoreCore";
 #else
     // Unix
-    return pathRet / ".safemine";
+    return pathRet / ".safeminemorecore";
 #endif
 #endif
 }
 
-static fs::path g_blocks_path_cached;
 static fs::path g_blocks_path_cache_net_specific;
 static fs::path pathCached;
 static fs::path pathCachedNetSpecific;
 static CCriticalSection csPathCached;
 
-const fs::path &GetBlocksDir(bool fNetSpecific)
+const fs::path &GetBlocksDir()
 {
 
     LOCK(csPathCached);
-
-    fs::path &path = fNetSpecific ? g_blocks_path_cache_net_specific : g_blocks_path_cached;
+    fs::path &path = g_blocks_path_cache_net_specific;
 
     // This can be called during exceptions by LogPrintf(), so we cache the
     // value so we don't have to do memory allocations after that.
@@ -713,9 +715,7 @@ const fs::path &GetBlocksDir(bool fNetSpecific)
     } else {
         path = GetDataDir(false);
     }
-    if (fNetSpecific)
-        path /= BaseParams().DataDir();
-
+    path /= BaseParams().DataDir();
     path /= "blocks";
     fs::create_directories(path);
     return path;
@@ -767,7 +767,6 @@ void ClearDatadirCache()
 
     pathCached = fs::path();
     pathCachedNetSpecific = fs::path();
-    g_blocks_path_cached = fs::path();
     g_blocks_path_cache_net_specific = fs::path();
 }
 
@@ -807,7 +806,7 @@ void ArgsManager::ReadConfigFile(const std::string& confPath)
     if (stream.good()) {
         ReadConfigStream(stream);
     } else {
-        // Create an empty safemine.conf if it does not excist
+        // Create an empty safeminemore.conf if it does not excist
         FILE* configFile = fopen(GetConfigFile(confPath).string().c_str(), "a");
         if (configFile != nullptr)
             fclose(configFile);
@@ -835,8 +834,10 @@ std::string ArgsManager::GetChainName() const
         return CBaseChainParams::DEVNET;
     if (fRegTest)
         return CBaseChainParams::REGTEST;
-    if (fTestNet)
+    if (fTestNet) {
+        std::cout<< CBaseChainParams::TESTNET << "\n";
         return CBaseChainParams::TESTNET;
+    }
     return CBaseChainParams::MAIN;
 }
 
@@ -1148,11 +1149,13 @@ std::string CopyrightHolders(const std::string& strPrefix, unsigned int nStartYe
     std::string strCopyrightHolders = strPrefix + strprintf(" %u ", nEndYear) + strprintf(_(COPYRIGHT_HOLDERS), _(COPYRIGHT_HOLDERS_SUBSTITUTION));
 
     // Check for untranslated substitution to make sure Dash Core copyright is not removed by accident
-    if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("Dash Core") == std::string::npos) {
-        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Dash Core developers";
+    if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("Safeminemore Core") == std::string::npos) {
+        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2021, nEndYear) + "The Safeminemore Core developers";
     }
+
     // Check for untranslated substitution to make sure Bitcoin Core copyright is not removed by accident
     if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("Bitcoin Core") == std::string::npos) {
+        strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2014, nEndYear) + "The Dash Core developers";
         strCopyrightHolders += "\n" + strPrefix + strprintf(" %u-%u ", 2009, nEndYear) + "The Bitcoin Core developers";
     }
     return strCopyrightHolders;
@@ -1162,6 +1165,19 @@ std::string CopyrightHolders(const std::string& strPrefix, unsigned int nStartYe
 int64_t GetStartupTime()
 {
     return nStartupTime;
+}
+
+void SetThreadPriority(int nPriority)
+{
+#ifdef WIN32
+    SetThreadPriority(GetCurrentThread(), nPriority);
+#else
+#ifdef PRIO_THREAD
+    setpriority(PRIO_THREAD, 0, nPriority);
+#else
+    setpriority(PRIO_PROCESS, 0, nPriority);
+#endif
+#endif
 }
 
 fs::path AbsPathForConfigVal(const fs::path& path, bool net_specific)

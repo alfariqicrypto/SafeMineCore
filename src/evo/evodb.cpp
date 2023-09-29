@@ -1,4 +1,5 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -65,6 +66,12 @@ bool CEvoDB::VerifyBestBlock(const uint256& hash)
 {
     // Make sure evodb is consistent.
     // If we already have best block hash saved, the previous block should match it.
+//    uint256 hashBestBlock;
+//    bool fHasBestBlock = Read(EVODB_BEST_BLOCK, hashBestBlock);
+//    uint256 hashBlockIndex = fHasBestBlock ? hash : uint256();
+//    assert(hashBestBlock == hashBlockIndex);
+//
+//    return fHasBestBlock || hashBestBlock == uint256();
     uint256 hashBestBlock;
     if (!Read(EVODB_BEST_BLOCK, hashBestBlock)) {
         return false;

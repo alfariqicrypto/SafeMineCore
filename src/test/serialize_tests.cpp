@@ -5,7 +5,7 @@
 #include <serialize.h>
 #include <streams.h>
 #include <hash.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <stdint.h>
 

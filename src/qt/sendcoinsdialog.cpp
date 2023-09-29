@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -22,6 +23,8 @@
 #include <policy/fees.h>
 #include <wallet/fees.h>
 #include <wallet/wallet.h>
+#include <future/fee.h>
+#include <validation.h>
 
 #include <QFontMetrics>
 #include <QScrollBar>
@@ -231,6 +234,15 @@ SendCoinsDialog::~SendCoinsDialog()
     delete ui;
 }
 
+void SendCoinsDialog::OnDisplay() {
+    for (int i = 0; i < ui->entries->count(); ++i) {
+        SendCoinsEntry *entry = qobject_cast<SendCoinsEntry*>(ui->entries->itemAt(i)->widget());
+        if(entry) {
+            entry->SetFutureVisible(sporkManager.IsSporkActive(SPORK_22_SPECIAL_TX_FEE) && Params().IsFutureActive(chainActive.Tip()) && i == 0);
+        }
+    }
+}
+
 void SendCoinsDialog::on_sendButton_clicked()
 {
     if(!model || !model->getOptionsModel())
@@ -303,6 +315,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 
     // Format confirmation message
     QStringList formatted;
+    bool hasFuture = false;
     for (const SendCoinsRecipient &rcp : currentTransaction.getRecipients())
     {
         // generate bold amount string with wallet name in case of multiwallet
@@ -336,6 +349,27 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
         else // unauthenticated payment request
         {
             recipientElement = tr("%1 to %2").arg(amount, address);
+        }
+        //std::cout << rcp.amount << " is future output " << rcp.isFutureOutput << "\n";
+        if(rcp.isFutureOutput) {
+            hasFuture = true;
+            if(recipients[0].maturity >= 0) {
+                recipientElement.append(tr("<br>Confirmations in: <b>%1 blocks</b><br />").arg(recipients[0].maturity));
+            }
+            if(recipients[0].locktime >= 0) {
+                recipientElement.append(tr("Time in: <b>%1 seconds from first confirmed</b><br />")
+                                                .arg(recipients[0].locktime));
+            }
+            if(recipients[0].maturity >= 0 && recipients[0].locktime >= 0) {
+                int calcBlock = (recipients[0].maturity * 2 * 60);
+                if(calcBlock < recipients[0].locktime) {
+                    recipientElement.append("This transaction will likely mature based on confirmations.");
+                } else {
+                    recipientElement.append("This transaction will likely mature based on time.");
+                }
+            } else if(recipients[0].maturity < 0 && recipients[0].locktime < 0){
+                recipientElement.append("<span style='" + GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_ERROR) + "'><b>No maturity is set. Transaction will mature as normal.</b></span>");
+            }
         }
 
         formatted.append(recipientElement);
@@ -374,7 +408,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
     }
 
     CAmount txFee = currentTransaction.getTransactionFee();
-
+    txFee += hasFuture ? getFutureFeesCoin() : 0;
     if(txFee > 0)
     {
         // append fee string if a fee is required
@@ -483,7 +517,10 @@ void SendCoinsDialog::accept()
 
 SendCoinsEntry *SendCoinsDialog::addEntry()
 {
-    SendCoinsEntry* entry = new SendCoinsEntry(this);
+
+    SendCoinsEntry* entry = new SendCoinsEntry(this, sporkManager.IsSporkActive(SPORK_22_SPECIAL_TX_FEE)
+                                                            && Params().IsFutureActive(chainActive.Tip())
+                                                            && ui->entries->count() == 0);
     entry->setModel(model);
     ui->entries->addWidget(entry);
     connect(entry, SIGNAL(removeEntry(SendCoinsEntry*)), this, SLOT(removeEntry(SendCoinsEntry*)));
@@ -656,6 +693,9 @@ void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn 
         msgParams.first = tr("Payment request expired.");
         msgParams.second = CClientUIInterface::MSG_ERROR;
         break;
+    case WalletModel::AmountExceedsmaxmoney:
+        msgParams.first = tr("The amount to pay exceeds the limit of 21 million per transaction.");
+        break;    
     // included to prevent a compiler warning.
     case WalletModel::OK:
     default:
@@ -876,7 +916,7 @@ void SendCoinsDialog::coinControlChangeEdited(const QString& text)
         }
         else if (!IsValidDestination(dest)) // Invalid address
         {
-            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid SafeMine address"));
+            ui->labelCoinControlChangeLabel->setText(tr("Warning: Invalid Safeminemore address"));
         }
         else // Valid address
         {

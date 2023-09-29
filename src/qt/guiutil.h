@@ -22,6 +22,7 @@
 class QValidatedLineEdit;
 class OptionsModel;
 class SendCoinsRecipient;
+class SendFuturesRecipient;
 
 namespace interfaces
 {
@@ -39,7 +40,7 @@ class QUrl;
 class QWidget;
 QT_END_NAMESPACE
 
-/** Utility functions used by the SafeMine Qt UI.
+/** Utility functions used by the Safeminemore Qt UI.
  */
 namespace GUIUtil
 {
@@ -114,7 +115,7 @@ namespace GUIUtil
     // Setup appearance settings if not done yet
     void setupAppearance(QWidget* parent, OptionsModel* model);
 
-    // Parse "safemine:" URI into recipient object, return true on successful parsing
+    // Parse "safeminemore:" URI into recipient object, return true on successful parsing
     bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out);
     bool parseBitcoinURI(QString uri, SendCoinsRecipient *out);
     bool validateBitcoinURI(const QString& uri);
@@ -187,7 +188,7 @@ namespace GUIUtil
     // Open debug.log
     void openDebugLogfile();
 
-    // Open safemine.conf
+    // Open safeminemore.conf
     void openConfigfile();
 
     // Browse backup folder
@@ -319,7 +320,7 @@ namespace GUIUtil
     /** get font size with GUIUtil::fontScale applied */
     double getScaledFontSize(int nSize);
 
-    /** Load safemine specific appliciation fonts */
+    /** Load safeminemore specific appliciation fonts */
     bool loadFonts();
     /** Check if the fonts have been loaded successfully */
     bool fontsLoaded();
@@ -363,8 +364,8 @@ namespace GUIUtil
     /** Return the name of the currently active theme.*/
     QString getActiveTheme();
 
-    /** Check if a safemine specific theme is activated (light/dark).*/
-    bool safemineThemeActive();
+    /** Check if a safeminemore specific theme is activated (light/dark).*/
+    bool safeminemoreThemeActive();
 
     /** Load the theme and update all UI elements according to the appearance settings. */
     void loadTheme(bool fForce = false);

@@ -1,12 +1,13 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2020 The Dash Core developers
-// Copyright (c) 2021 The SafeMine Core developers
+// Copyright (c) 2020-2021 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <qt/bitcoinunits.h>
 #include <chainparams.h>
 #include <primitives/transaction.h>
+#include <validation.h>
 
 #include <QSettings>
 #include <QStringList>
@@ -20,10 +21,10 @@ BitcoinUnits::BitcoinUnits(QObject *parent):
 QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
 {
     QList<BitcoinUnits::Unit> unitlist;
-    unitlist.append(SMX);
-    unitlist.append(mSMX);
-    unitlist.append(uSMX);
-    unitlist.append(Satimintos);
+    unitlist.append(SM2R);
+    unitlist.append(mSM2R);
+    unitlist.append(uSM2R);
+    unitlist.append(ruffs);
     return unitlist;
 }
 
@@ -31,10 +32,10 @@ bool BitcoinUnits::valid(int unit)
 {
     switch(unit)
     {
-    case SMX:
-    case mSMX:
-    case uSMX:
-    case Satimintos:
+    case SM2R:
+    case mSM2R:
+    case uSM2R:
+    case ruffs:
         return true;
     default:
         return false;
@@ -47,10 +48,10 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case SMX: return QString("SMX");
-            case mSMX: return QString("mSMX");
-            case uSMX: return QString::fromUtf8("μSMX");
-            case Satimintos: return QString("Satimintos");
+            case SM2R: return QString("SM2R");
+            case mSM2R: return QString("mSM2R");
+            case uSM2R: return QString::fromUtf8("μSM2R");
+            case ruffs: return QString("ruffs");
             default: return QString("???");
         }
     }
@@ -58,10 +59,10 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case SMX: return QString("tSMX");
-            case mSMX: return QString("mtSMX");
-            case uSMX: return QString::fromUtf8("μtSMX");
-            case Satimintos: return QString("tSatimintos");
+            case SM2R: return QString("tSM2R");
+            case mSM2R: return QString("mtSM2R");
+            case uSM2R: return QString::fromUtf8("μtSM2R");
+            case ruffs: return QString("truffs");
             default: return QString("???");
         }
     }
@@ -73,10 +74,10 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case SMX: return QString("SafeMine");
-            case mSMX: return QString("Milli-SafeMine (1 / 1" THIN_SP_UTF8 "000)");
-            case uSMX: return QString("Micro-SafeMine (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case Satimintos: return QString("Ten Nano-SafeMine (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case SM2R: return QString("Safeminemore");
+            case mSM2R: return QString("Milli-Safeminemore (1 / 1" THIN_SP_UTF8 "000)");
+            case uSM2R: return QString("Micro-Safeminemore (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case ruffs: return QString("Ten Nano-Safeminemore (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -84,10 +85,10 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case SMX: return QString("TestSafeMines");
-            case mSMX: return QString("Milli-TestSafeMine (1 / 1" THIN_SP_UTF8 "000)");
-            case uSMX: return QString("Micro-TestSafeMine (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case Satimintos: return QString("Ten Nano-TestSafeMine (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case SM2R: return QString("TestSafeminemores");
+            case mSM2R: return QString("Milli-TestSafeminemore (1 / 1" THIN_SP_UTF8 "000)");
+            case uSM2R: return QString("Micro-TestSafeminemore (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case ruffs: return QString("Ten Nano-TestSafeminemore (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -97,10 +98,10 @@ qint64 BitcoinUnits::factor(int unit)
 {
     switch(unit)
     {
-    case SMX:  return 100000000;
-    case mSMX: return 100000;
-    case uSMX: return 100;
-    case Satimintos: return 1;
+    case SM2R:  return 100000000;
+    case mSM2R: return 100000;
+    case uSM2R: return 100;
+    case ruffs: return 1;
     default:   return 100000000;
     }
 }
@@ -109,10 +110,10 @@ int BitcoinUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case SMX: return 8;
-    case mSMX: return 5;
-    case uSMX: return 2;
-    case Satimintos: return 0;
+    case SM2R: return 8;
+    case mSM2R: return 5;
+    case uSM2R: return 2;
+    case ruffs: return 0;
     default: return 0;
     }
 }
@@ -271,5 +272,9 @@ QVariant BitcoinUnits::data(const int &row, int role) const
 
 CAmount BitcoinUnits::maxMoney()
 {
-    return MAX_MONEY;
+    if(Params().IsFutureActive(chainActive.Tip())){
+        return MAX_MONEY;    
+    }else{
+        return OLD_MAX_MONEY;  
+    }
 }

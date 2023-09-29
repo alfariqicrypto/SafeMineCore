@@ -4,7 +4,7 @@
 
 #include <streams.h>
 #include <support/allocators/zeroafterfree.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <boost/test/unit_test.hpp>
 

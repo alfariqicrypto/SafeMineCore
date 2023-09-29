@@ -1,10 +1,11 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
 // Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include <config/safemine-config.h>
+#include <config/safeminemore-config.h>
 #endif
 
 #include <qt/optionsmodel.h>
@@ -72,7 +73,7 @@ void OptionsModel::Init(bool resetSettings)
 
     // Display
     if (!settings.contains("nDisplayUnit"))
-        settings.setValue("nDisplayUnit", BitcoinUnits::SMX);
+        settings.setValue("nDisplayUnit", BitcoinUnits::SM2R);
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
 
     if (!settings.contains("strThirdPartyTxUrls"))
@@ -201,10 +202,10 @@ void OptionsModel::Init(bool resetSettings)
 
     if (!settings.contains("nCoinJoinAmount")) {
         // for migration from old settings
-        if (!settings.contains("nAnonymizeSafeMineAmount"))
+        if (!settings.contains("nAnonymizeSafeminemoreAmount"))
             settings.setValue("nCoinJoinAmount", DEFAULT_COINJOIN_AMOUNT);
         else
-            settings.setValue("nCoinJoinAmount", settings.value("nAnonymizeSafeMineAmount").toInt());
+            settings.setValue("nCoinJoinAmount", settings.value("nAnonymizeSafeminemoreAmount").toInt());
     }
     if (!m_node.softSetArg("-coinjoinamount", settings.value("nCoinJoinAmount").toString().toStdString()))
         addOverriddenOption("-coinjoinamount");
@@ -370,8 +371,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
 #ifdef ENABLE_WALLET
         case SpendZeroConfChange:
             return settings.value("bSpendZeroConfChange");
-        case ShowMasternodesTab:
-            return settings.value("fShowMasternodesTab");
+        case ShowSmartnodesTab:
+            return settings.value("fShowSmartnodesTab");
         case CoinJoinEnabled:
             return settings.value("fCoinJoinEnabled");
         case ShowAdvancedCJUI:
@@ -523,9 +524,9 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
-        case ShowMasternodesTab:
-            if (settings.value("fShowMasternodesTab") != value) {
-                settings.setValue("fShowMasternodesTab", value);
+        case ShowSmartnodesTab:
+            if (settings.value("fShowSmartnodesTab") != value) {
+                settings.setValue("fShowSmartnodesTab", value);
                 setRestartRequired(true);
             }
             break;

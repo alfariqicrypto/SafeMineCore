@@ -1,4 +1,5 @@
 // Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -29,11 +30,13 @@ inline bool GetTxPayload(const std::vector<unsigned char>& payload, T& obj)
     }
     return ds.empty();
 }
+
 template <typename T>
 inline bool GetTxPayload(const CMutableTransaction& tx, T& obj)
 {
     return GetTxPayload(tx.vExtraPayload, obj);
 }
+
 template <typename T>
 inline bool GetTxPayload(const CTransaction& tx, T& obj)
 {

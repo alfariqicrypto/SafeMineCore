@@ -1,8 +1,9 @@
 // Copyright (c) 2018-2020 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <bls/bls.h>
 #include <evo/simplifiedmns.h>

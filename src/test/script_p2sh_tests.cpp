@@ -12,7 +12,7 @@
 #include <script/script_error.h>
 #include <script/sign.h>
 #include <script/ismine.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <vector>
 

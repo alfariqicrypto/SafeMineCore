@@ -1,4 +1,5 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,6 +14,7 @@
 #include <messagesigner.h>
 #include <script/standard.h>
 #include <validation.h>
+#include <spork.h>
 
 template <typename ProTx>
 static bool CheckService(const uint256& proTxHash, const ProTx& proTx, CValidationState& state)
@@ -80,6 +82,31 @@ static bool CheckInputsHash(const CTransaction& tx, const ProTx& proTx, CValidat
     return true;
 }
 
+bool CheckFutureTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
+{
+
+    if(!Params().IsFutureActive(chainActive.Tip())) {
+        return state.DoS(100, false, REJECT_INVALID, "future-not-enabled");
+    }
+    if (tx.nType != TRANSACTION_FUTURE) {
+        return state.DoS(100, false, REJECT_INVALID, "bad-future-type");
+    }
+
+    CFutureTx ftx;
+    if (!GetTxPayload(tx, ftx)) {
+        return state.DoS(100, false, REJECT_INVALID, "bad-future-payload");
+    }
+
+    if (ftx.nVersion == 0 || ftx.nVersion > CFutureTx::CURRENT_VERSION) {
+        return state.DoS(100, false, REJECT_INVALID, "bad-future-version");
+    }
+    if (!CheckInputsHash(tx, ftx, state)) {
+        return false;
+    }
+
+    return true;
+}
+
 bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view)
 {
     if (tx.nType != TRANSACTION_PROVIDER_REGISTER) {
@@ -132,10 +159,10 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     CTxDestination collateralTxDest;
     const CKeyID *keyForPayloadSig = nullptr;
     COutPoint collateralOutpoint;
-
+    Coin coin;
+	SmartnodeCollaterals collaterals = Params().GetConsensus().nCollaterals;
     if (!ptx.collateralOutpoint.hash.IsNull()) {
-        Coin coin;
-        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != 25000 * COIN) {
+        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || !collaterals.isValidCollateral(coin.out.nValue)) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
         }
 
@@ -155,7 +182,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
         if (ptx.collateralOutpoint.n >= tx.vout.size()) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-index");
         }
-        if (tx.vout[ptx.collateralOutpoint.n].nValue != 25000 * COIN) {
+        if (!collaterals.isValidCollateral(tx.vout[ptx.collateralOutpoint.n].nValue)) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
         }
 

@@ -1,4 +1,5 @@
 // Copyright (c) 2017-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +7,7 @@
 #include <rpc/server.h>
 #include <validation.h>
 
-#include <masternode/activemasternode.h>
+#include <smartnode/activesmartnode.h>
 
 #include <llmq/quorums.h>
 #include <llmq/quorums_blockprocessor.h>
@@ -187,10 +188,10 @@ UniValue quorum_dkgstatus(const JSONRPCRequest& request)
     for (const auto& type : llmq::CLLMQUtils::GetEnabledQuorumTypes(chainActive.Tip())) {
         const auto& params = llmq::GetLLMQParams(type);
 
-        if (fMasternodeMode) {
+        if (fSmartnodeMode) {
             const CBlockIndex* pindexQuorum = chainActive[tipHeight - (tipHeight % params.dkgInterval)];
-            auto allConnections = llmq::CLLMQUtils::GetQuorumConnections(params.type, pindexQuorum, activeMasternodeInfo.proTxHash, false);
-            auto outboundConnections = llmq::CLLMQUtils::GetQuorumConnections(params.type, pindexQuorum, activeMasternodeInfo.proTxHash, true);
+            auto allConnections = llmq::CLLMQUtils::GetQuorumConnections(params.type, pindexQuorum, activeSmartnodeInfo.proTxHash, false);
+            auto outboundConnections = llmq::CLLMQUtils::GetQuorumConnections(params.type, pindexQuorum, activeSmartnodeInfo.proTxHash, true);
             std::map<uint256, CAddress> foundConnections;
             g_connman->ForEachNode([&](const CNode* pnode) {
                 if (!pnode->verifiedProRegTxHash.IsNull() && allConnections.count(pnode->verifiedProRegTxHash)) {
@@ -231,9 +232,9 @@ void quorum_memberof_help()
 {
     throw std::runtime_error(
             "quorum memberof \"proTxHash\" (quorumCount)\n"
-            "Checks which quorums the given masternode is a member of.\n"
+            "Checks which quorums the given smartnode is a member of.\n"
             "\nArguments:\n"
-            "1. \"proTxHash\"                (string, required) ProTxHash of the masternode.\n"
+            "1. \"proTxHash\"                (string, required) ProTxHash of the smartnode.\n"
             "2. scanQuorumsCount           (number, optional) Number of quorums to scan for. If not specified,\n"
             "                              the active quorum count for each specific quorum type is used."
     );
@@ -263,7 +264,7 @@ UniValue quorum_memberof(const JSONRPCRequest& request)
     auto mnList = deterministicMNManager->GetListForBlock(pindexTip);
     auto dmn = mnList.GetMN(protxHash);
     if (!dmn) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "masternode not found");
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "smartnode not found");
     }
 
     UniValue result(UniValue::VARR);
@@ -531,7 +532,6 @@ void quorum_dkgsimerror_help()
 
 UniValue quorum_dkgsimerror(const JSONRPCRequest& request)
 {
-    auto cmd = request.params[0].get_str();
     if (request.fHelp || (request.params.size() != 3)) {
         quorum_dkgsimerror_help();
     }
@@ -613,18 +613,18 @@ UniValue quorum_getdata(const JSONRPCRequest& request)
             "  info              - Return information about a quorum\n"
             "  dkgsimerror       - Simulates DKG errors and malicious behavior\n"
             "  dkgstatus         - Return the status of the current DKG process\n"
-            "  memberof          - Checks which quorums the given masternode is a member of\n"
+            "  memberof          - Checks which quorums the given smartnode is a member of\n"
             "  sign              - Threshold-sign a message\n"
             "  verify            - Test if a quorum signature is valid for a request id and a message hash\n"
             "  hasrecsig         - Test if a valid recovered signature is present\n"
             "  getrecsig         - Get a recovered signature\n"
             "  isconflicting     - Test if a conflict exists\n"
             "  selectquorum      - Return the quorum that would/should sign a request\n"
-            "  getdata           - Request quorum data from other masternodes in the quorum\n"
+            "  getdata           - Request quorum data from other smartnodes in the quorum\n"
     );
 }
 
-UniValue quorum(const JSONRPCRequest& request)
+UniValue _quorum(const JSONRPCRequest& request)
 {
     if (request.fHelp && request.params.empty()) {
         quorum_help();
@@ -758,7 +758,7 @@ UniValue verifyislock(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)
   //  --------------------- ------------------------  -----------------------
-    { "evo",                "quorum",                 &quorum,                 {}  },
+    { "evo",                "quorum",                 &_quorum,                 {}  },
     { "evo",                "verifychainlock",        &verifychainlock,        {"blockHash", "signature", "blockHeight"} },
     { "evo",                "verifyislock",           &verifyislock,           {"id", "txid", "signature", "maxHeight"}  },
 };

@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2020 The Dash Core developers
-// Copyright (c) 2021 The SafeMine Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 
 #include <cachemultimap.h>
 
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <algorithm>
 #include <iostream>

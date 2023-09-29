@@ -1,4 +1,5 @@
 // Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,7 +9,7 @@
 #include <llmq/quorums_debug.h>
 #include <llmq/quorums_utils.h>
 
-#include <masternode/activemasternode.h>
+#include <smartnode/activesmartnode.h>
 #include <chainparams.h>
 #include <net_processing.h>
 #include <spork.h>
@@ -20,6 +21,7 @@ CDKGPendingMessages::CDKGPendingMessages(size_t _maxMessagesPerNode, int _invTyp
     maxMessagesPerNode(_maxMessagesPerNode),
     invType(_invType)
 {
+    LogPrint(BCLog::LLMQ_DKG, "CDKGPendingMessages::%s --  maxMessagesPerNode %d for type %d\n", __func__, maxMessagesPerNode, invType);
 }
 
 void CDKGPendingMessages::PushPendingMessage(NodeId from, CDataStream& vRecv)
@@ -40,7 +42,7 @@ void CDKGPendingMessages::PushPendingMessage(NodeId from, CDataStream& vRecv)
 
     if (messagesPerNode[from] >= maxMessagesPerNode) {
         // TODO ban?
-        LogPrint(BCLog::LLMQ_DKG, "CDKGPendingMessages::%s -- too many messages, peer=%d\n", __func__, from);
+        LogPrint(BCLog::LLMQ_DKG, "CDKGPendingMessages::%s -- too many messages %d, peer=%d\n", __func__, messagesPerNode[from], from);
         return;
     }
     messagesPerNode[from]++;
@@ -87,10 +89,10 @@ CDKGSessionHandler::CDKGSessionHandler(const Consensus::LLMQParams& _params, CBL
     blsWorker(_blsWorker),
     dkgManager(_dkgManager),
     curSession(std::make_shared<CDKGSession>(_params, _blsWorker, _dkgManager)),
-    pendingContributions((size_t)_params.size * 2, MSG_QUORUM_CONTRIB), // we allow size*2 messages as we need to make sure we see bad behavior (double messages)
-    pendingComplaints((size_t)_params.size * 2, MSG_QUORUM_COMPLAINT),
-    pendingJustifications((size_t)_params.size * 2, MSG_QUORUM_JUSTIFICATION),
-    pendingPrematureCommitments((size_t)_params.size * 2, MSG_QUORUM_PREMATURE_COMMITMENT)
+    pendingContributions(800, MSG_QUORUM_CONTRIB), // we allow size*2 messages as we need to make sure we see bad behavior (double messages)
+    pendingComplaints(800, MSG_QUORUM_COMPLAINT),
+    pendingJustifications(800, MSG_QUORUM_JUSTIFICATION),
+    pendingPrematureCommitments(800, MSG_QUORUM_PREMATURE_COMMITMENT)
 {
     if (params.type == Consensus::LLMQ_NONE) {
         throw std::runtime_error("Can't initialize CDKGSessionHandler with LLMQ_NONE type.");
@@ -124,6 +126,7 @@ void CDKGSessionHandler::UpdatedBlockTip(const CBlockIndex* pindexNew)
 void CDKGSessionHandler::ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv)
 {
     // We don't handle messages in the calling thread as deserialization/processing of these would block everything
+    LogPrint(BCLog::LLMQ_DKG, "CDKGSessionHandler::%s --  Processing %s message from node %d \n", __func__, strCommand, pfrom->GetId());
     if (strCommand == NetMsgType::QCONTRIB) {
         pendingContributions.PushPendingMessage(pfrom->GetId(), vRecv);
     } else if (strCommand == NetMsgType::QCOMPLAINT) {
@@ -163,7 +166,7 @@ bool CDKGSessionHandler::InitNewQuorum(const CBlockIndex* pindexQuorum)
 
     auto mns = CLLMQUtils::GetAllQuorumMembers(params.type, pindexQuorum);
 
-    if (!curSession->Init(pindexQuorum, mns, activeMasternodeInfo.proTxHash)) {
+    if (!curSession->Init(pindexQuorum, mns, activeSmartnodeInfo.proTxHash)) {
         LogPrintf("CDKGSessionManager::%s -- quorum initialiation failed for %s\n", __func__, curSession->params.name);
         return false;
     }
@@ -456,6 +459,7 @@ bool ProcessPendingMessageBatch(CDKGSession& session, CDKGPendingMessages& pendi
         preverifiedMessages.emplace_back(p);
     }
     if (preverifiedMessages.empty()) {
+        LogPrint(BCLog::LLMQ_DKG, "%s -- empty preverifiedMessages \n", __func__);
         return true;
     }
 

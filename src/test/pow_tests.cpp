@@ -7,7 +7,7 @@
 #include <pow.h>
 #include <random.h>
 #include <util.h>
-#include <test/test_safemine.h>
+#include <test/test_safeminemore.h>
 
 #include <boost/test/unit_test.hpp>
 

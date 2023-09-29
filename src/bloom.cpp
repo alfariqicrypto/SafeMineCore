@@ -222,6 +222,7 @@ bool CBloomFilter::CheckSpecialTransactionMatchesAndUpdate(const CTransaction &t
     }
     case(TRANSACTION_COINBASE):
     case(TRANSACTION_QUORUM_COMMITMENT):
+    case(TRANSACTION_FUTURE):
         // No aditional checks for this transaction types
         return false;
     }
@@ -261,8 +262,7 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
             {
                 txnouttype type;
                 std::vector<std::vector<unsigned char> > vSolutions;
-                if (Solver(txout.scriptPubKey, type, vSolutions) &&
-                        (type == TX_PUBKEY || type == TX_MULTISIG))
+                if(Solver(txout.scriptPubKey, type, vSolutions) && (type == TX_PUBKEY || type == TX_MULTISIG))
                     insert(COutPoint(hash, i));
             }
         }

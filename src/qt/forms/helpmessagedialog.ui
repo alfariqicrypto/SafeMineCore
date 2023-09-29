@@ -129,7 +129,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../safemine.qrc"/>
+  <include location="../safeminemore.qrc"/>
  </resources>
  <connections>
   <connection>

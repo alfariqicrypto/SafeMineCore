@@ -1,12 +1,14 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2014-2020 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <rpc/blockchain.h>
 
 #include <amount.h>
+#include <chain.h>
 #include <chainparams.h>
 #include <checkpoints.h>
 #include <coins.h>
@@ -14,6 +16,7 @@
 #include <core_io.h>
 #include <consensus/validation.h>
 #include <validation.h>
+#include <core_io.h>
 // #include <rpc/index/txindex.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
@@ -118,7 +121,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     return result;
 }
 
-UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDetails)
+UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDetails, bool powHash)
 {
     AssertLockHeld(cs_main);
     UniValue result(UniValue::VOBJ);
@@ -171,6 +174,8 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     CBlockIndex *pnext = chainActive.Next(blockindex);
     if (pnext)
         result.pushKV("nextblockhash", pnext->GetBlockHash().GetHex());
+    if(powHash)
+        result.pushKV("powhash", block.GetPOWHash().GetHex());
 
     result.pushKV("chainlock", chainLock);
 
@@ -190,8 +195,7 @@ UniValue getblockcount(const JSONRPCRequest& request)
             + HelpExampleRpc("getblockcount", "")
         );
 
-    LOCK(cs_main);
-    return chainActive.Height();
+    return chainActive.AtomicHeight();
 }
 
 UniValue getbestblockhash(const JSONRPCRequest& request)
@@ -216,7 +220,7 @@ UniValue getbestchainlock(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error(
             "getbestchainlock\n"
-            "\nReturns information about the best chainlock. Throws an error if there is no known chainlock yet."
+            "\nReturns the block hash of the best chainlock. Throws an error if there is no known chainlock yet. "
             "\nResult:\n"
             "{\n"
             "  \"blockhash\" : \"hash\",      (string) The block hash hex encoded\n"
@@ -1011,7 +1015,7 @@ UniValue getmerkleblocks(const JSONRPCRequest& request)
 
 UniValue getblock(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
             "getblock \"blockhash\" ( verbosity ) \n"
             "\nIf verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.\n"
@@ -1038,7 +1042,7 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"cbTx\" : {             (json object) The coinbase special transaction \n"
             "     \"version\"           (numeric) The coinbase special transaction version\n"
             "     \"height\"            (numeric) The block height\n"
-            "     \"merkleRootMNList\" : \"xxxx\", (string) The merkle root of the masternode list\n"
+            "     \"merkleRootMNList\" : \"xxxx\", (string) The merkle root of the smartnode list\n"
             "     \"merkleRootQuorums\" : \"xxxx\", (string) The merkle root of the quorum list\n"
             "  },\n"
             "  \"time\" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)\n"
@@ -1050,6 +1054,7 @@ UniValue getblock(const JSONRPCRequest& request)
             "  \"nTx\" : n,             (numeric) The number of transactions in the block.\n"
             "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
             "  \"nextblockhash\" : \"hash\"       (string) The hash of the next block\n"
+            "  \"powhash\" : \"hash\"       (string) The pow hash of the this block\n"
             "}\n"
             "\nResult (for verbosity = 2):\n"
             "{\n"
@@ -1076,6 +1081,14 @@ UniValue getblock(const JSONRPCRequest& request)
         else
             verbosity = request.params[1].get_bool() ? 1 : 0;
     }
+    bool powHash = false;
+    if (!request.params[2].isNull()) {
+		if(request.params[2].isNum()) {
+			powHash = request.params[2].get_int() != 0;
+		} else {
+			powHash = request.params[2].get_bool();
+		}
+	}
 
     const CBlockIndex* pblockindex = LookupBlockIndex(hash);
     if (!pblockindex) {
@@ -1092,7 +1105,7 @@ UniValue getblock(const JSONRPCRequest& request)
         return strHex;
     }
 
-    return blockToJSON(block, pblockindex, verbosity >= 2);
+    return blockToJSON(block, pblockindex, verbosity >= 2, powHash);
 }
 
 UniValue pruneblockchain(const JSONRPCRequest& request)
@@ -1207,8 +1220,8 @@ UniValue gettxout(const JSONRPCRequest& request)
             "     \"hex\" : \"hex\",        (string) \n"
             "     \"reqSigs\" : n,          (numeric) Number of required signatures\n"
             "     \"type\" : \"pubkeyhash\", (string) The type, eg pubkeyhash\n"
-            "     \"addresses\" : [          (array of string) array of safemine addresses\n"
-            "        \"address\"     (string) safemine address\n"
+            "     \"addresses\" : [          (array of string) array of safeminemore addresses\n"
+            "        \"address\"     (string) safeminemore address\n"
             "        ,...\n"
             "     ]\n"
             "  },\n"
@@ -1301,13 +1314,13 @@ static UniValue SoftForkMajorityDesc(int version, CBlockIndex* pindex, const Con
     switch(version)
     {
         case 2:
-            activated = pindex->nHeight >= consensusParams.BIP34Height;
+            activated = consensusParams.BIP34Enabled;
             break;
         case 3:
-            activated = pindex->nHeight >= consensusParams.BIP66Height;
+            activated = consensusParams.BIP66Enabled;
             break;
         case 4:
-            activated = pindex->nHeight >= consensusParams.BIP65Height;
+            activated = consensusParams.BIP65Enabled;
             break;
     }
     rv.pushKV("status", activated);
@@ -1419,12 +1432,20 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
             + HelpExampleRpc("getblockchaininfo", "")
         );
 
-    LOCK(cs_main);
-
-    std::string strChainName = gArgs.IsArgSet("-devnet") ? gArgs.GetDevNetName() : Params().NetworkIDString();
-
     UniValue obj(UniValue::VOBJ);
-    obj.pushKV("chain",                 strChainName);
+    std::string strChainName = gArgs.IsArgSet("-devnet") ? gArgs.GetDevNetName() : Params().NetworkIDString();
+    obj.pushKV("chain", strChainName);
+
+    if (fProcessingHeaders)
+    {
+        // We don't want to wait a long time for processing headers, just give out some basic information without a lock
+        obj.pushKV("blocks",  chainActive.AtomicHeight());
+        obj.pushKV("headers", atomicHeaderHeight);
+        obj.pushKV("warnings", GetWarnings("statusbar"));
+        return obj;
+    }
+
+    LOCK(cs_main);
     obj.pushKV("blocks",                (int)chainActive.Height());
     obj.pushKV("headers",               pindexBestHeader ? pindexBestHeader->nHeight : -1);
     obj.pushKV("bestblockhash",         chainActive.Tip()->GetBlockHash().GetHex());
@@ -1453,16 +1474,16 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     }
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    CBlockIndex* tip = chainActive.Tip();
+    // CBlockIndex* tip = chainActive.Tip();
     UniValue softforks(UniValue::VARR);
     UniValue bip9_softforks(UniValue::VOBJ);
     // sorted by activation block
-    softforks.push_back(SoftForkDesc("bip34", 2, tip, consensusParams));
-    softforks.push_back(SoftForkDesc("bip66", 3, tip, consensusParams));
-    softforks.push_back(SoftForkDesc("bip65", 4, tip, consensusParams));
-    for (int pos = Consensus::DEPLOYMENT_CSV; pos != Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++pos) {
-        BIP9SoftForkDescPushBack(bip9_softforks, consensusParams, static_cast<Consensus::DeploymentPos>(pos));
-    }
+    // softforks.push_back(SoftForkDesc("bip34", 2, tip, consensusParams));
+    // softforks.push_back(SoftForkDesc("bip66", 3, tip, consensusParams));
+    // softforks.push_back(SoftForkDesc("bip65", 4, tip, consensusParams));
+     for (int pos = Consensus::DEPLOYMENT_V17; pos != Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++pos) {
+         BIP9SoftForkDescPushBack(bip9_softforks, consensusParams, static_cast<Consensus::DeploymentPos>(pos));
+     }
     obj.pushKV("softforks",             softforks);
     obj.pushKV("bip9_softforks", bip9_softforks);
 
@@ -1876,7 +1897,7 @@ static UniValue getblockstats(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 4) {
         throw std::runtime_error(
             "getblockstats hash_or_height ( stats )\n"
-            "\nCompute per block statistics for a given window. All amounts are in Satimintos.\n"
+            "\nCompute per block statistics for a given window. All amounts are in ruffs.\n"
             "It won't work for some heights with pruning.\n"
             "It won't work without -txindex for utxo_size_inc, *fee or *feerate stats.\n"
             "\nArguments:\n"
@@ -1890,20 +1911,20 @@ static UniValue getblockstats(const JSONRPCRequest& request)
             "\nResult:\n"
             "{                           (json object)\n"
             "  \"avgfee\": xxxxx,          (numeric) Average fee in the block\n"
-            "  \"avgfeerate\": xxxxx,      (numeric) Average feerate (in Satimintos per byte)\n"
+            "  \"avgfeerate\": xxxxx,      (numeric) Average feerate (in ruffs per byte)\n"
             "  \"avgtxsize\": xxxxx,       (numeric) Average transaction size\n"
             "  \"blockhash\": xxxxx,       (string) The block hash (to check for potential reorgs)\n"
             "  \"height\": xxxxx,          (numeric) The height of the block\n"
             "  \"ins\": xxxxx,             (numeric) The number of inputs (excluding coinbase)\n"
             "  \"maxfee\": xxxxx,          (numeric) Maximum fee in the block\n"
-            "  \"maxfeerate\": xxxxx,      (numeric) Maximum feerate (in Satimintos per byte)\n"
+            "  \"maxfeerate\": xxxxx,      (numeric) Maximum feerate (in ruffs per byte)\n"
             "  \"maxtxsize\": xxxxx,       (numeric) Maximum transaction size\n"
             "  \"medianfee\": xxxxx,       (numeric) Truncated median fee in the block\n"
-            "  \"medianfeerate\": xxxxx,   (numeric) Truncated median feerate (in Satimintos per byte)\n"
+            "  \"medianfeerate\": xxxxx,   (numeric) Truncated median feerate (in ruffs per byte)\n"
             "  \"mediantime\": xxxxx,      (numeric) The block median time past\n"
             "  \"mediantxsize\": xxxxx,    (numeric) Truncated median transaction size\n"
             "  \"minfee\": xxxxx,          (numeric) Minimum fee in the block\n"
-            "  \"minfeerate\": xxxxx,      (numeric) Minimum feerate (in Satimintos per byte)\n"
+            "  \"minfeerate\": xxxxx,      (numeric) Minimum feerate (in ruffs per byte)\n"
             "  \"mintxsize\": xxxxx,       (numeric) Minimum transaction size\n"
             "  \"outs\": xxxxx,            (numeric) The number of outputs\n"
             "  \"subsidy\": xxxxx,         (numeric) The block subsidy\n"
@@ -1987,6 +2008,7 @@ static UniValue getblockstats(const JSONRPCRequest& request)
     std::vector<CAmount> fee_array;
     std::vector<CAmount> feerate_array;
     std::vector<int64_t> txsize_array;
+    bool isV17active = Params().IsFutureActive(chainActive.Tip());
 
     for (const auto& tx : block.vtx) {
         outputs += tx->vout.size();
@@ -2038,7 +2060,7 @@ static UniValue getblockstats(const JSONRPCRequest& request)
             }
 
             CAmount txfee = tx_total_in - tx_total_out;
-            assert(MoneyRange(txfee));
+            assert(MoneyRange(txfee, isV17active));
             if (do_medianfee) {
                 fee_array.push_back(txfee);
             }

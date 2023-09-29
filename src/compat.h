@@ -7,7 +7,7 @@
 #define BITCOIN_COMPAT_H
 
 #if defined(HAVE_CONFIG_H)
-#include <config/safemine-config.h>
+#include <config/safeminemore-config.h>
 #endif
 
 #include <type_traits>
@@ -91,6 +91,22 @@ typedef int64_t ssize_t;
 typedef int32_t ssize_t;
 #endif
 #endif
+#endif
+
+#ifndef PRIO_MAX
+#define PRIO_MAX 20
+#endif
+#ifndef THREAD_PRIORITY_LOWEST
+#define THREAD_PRIORITY_LOWEST          PRIO_MAX
+#endif
+#ifndef THREAD_PRIORITY_BELOW_NORMAL
+#define THREAD_PRIORITY_BELOW_NORMAL    2
+#endif
+#ifndef THREAD_PRIORITY_NORMAL
+#define THREAD_PRIORITY_NORMAL          0
+#endif
+#ifndef THREAD_PRIORITY_ABOVE_NORMAL
+#define THREAD_PRIORITY_ABOVE_NORMAL    (-2)
 #endif
 
 #if HAVE_DECL_STRNLEN == 0

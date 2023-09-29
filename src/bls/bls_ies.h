@@ -1,9 +1,10 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SMX_CRYPTO_BLS_IES_H
-#define SMX_CRYPTO_BLS_IES_H
+#ifndef SAFEMINEMORE_CRYPTO_BLS_IES_H
+#define SAFEMINEMORE_CRYPTO_BLS_IES_H
 
 #include <bls/bls.h>
 #include <streams.h>
@@ -166,4 +167,4 @@ public:
     }
 };
 
-#endif // SMX_CRYPTO_BLS_IES_H
+#endif // SAFEMINEMORE_CRYPTO_BLS_IES_H

@@ -34,7 +34,7 @@ namespace interfaces {
 class Handler;
 class Wallet;
 
-//! Interface for the src/evo part of a safemine node (safemined process).
+//! Interface for the src/evo part of a safeminemore node (safeminemored process).
 class EVO
 {
 public:
@@ -42,7 +42,7 @@ public:
     virtual CDeterministicMNList getListAtChainTip() = 0;
 };
 
-//! Interface for the src/llmq part of a safemine node (safemined process).
+//! Interface for the src/llmq part of a safeminemore node (safeminemored process).
 class LLMQ
 {
 public:
@@ -50,8 +50,8 @@ public:
     virtual size_t getInstantSentLockCount() = 0;
 };
 
-//! Interface for the src/masternode part of a safemine node (safemined process).
-namespace Masternode
+//! Interface for the src/masternode part of a safeminemore node (safeminemored process).
+namespace Smartnode
 {
 class Sync
 {
@@ -88,7 +88,7 @@ public:
 };
 }
 
-//! Top-level interface for a safemine node (safemined process).
+//! Top-level interface for a safeminemore node (safeminemored process).
 class Node
 {
 public:
@@ -255,7 +255,7 @@ public:
     virtual LLMQ& llmq() = 0;
 
     //! Return interface for accessing masternode related handler.
-    virtual Masternode::Sync& masternodeSync() = 0;
+    virtual Smartnode::Sync& smartnodeSync() = 0;
 
     //! Return interface for accessing masternode related handler.
 #ifdef ENABLE_WALLET
@@ -313,9 +313,9 @@ public:
     virtual std::unique_ptr<Handler> handleNotifyHeaderTip(NotifyHeaderTipFn fn) = 0;
 
     //! Register handler for masternode list update messages.
-    using NotifyMasternodeListChangedFn =
+    using NotifySmartnodeListChangedFn =
         std::function<void(const CDeterministicMNList& newList)>;
-    virtual std::unique_ptr<Handler> handleNotifyMasternodeListChanged(NotifyMasternodeListChangedFn fn) = 0;
+    virtual std::unique_ptr<Handler> handleNotifySmartnodeListChanged(NotifySmartnodeListChangedFn fn) = 0;
 
     //! Register handler for additional data sync progress update messages.
     using NotifyAdditionalDataSyncProgressChangedFn =

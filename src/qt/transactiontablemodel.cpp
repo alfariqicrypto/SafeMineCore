@@ -92,6 +92,14 @@ public:
     {
         qDebug() << "TransactionTablePriv::updateWallet: " + QString::fromStdString(hash.ToString()) + " " + QString::number(status);
 
+        if (hash == uint256() && status == CT_UPDATED)
+        {
+            parent->beginResetModel();
+            refreshWallet(wallet);
+            parent->endResetModel();
+            return;
+        }
+
         // Find bounds of this transaction in model
         QList<TransactionRecord>::iterator lower = qLowerBound(
             cachedWallet.begin(), cachedWallet.end(), hash, TxLessThan());
@@ -124,8 +132,8 @@ public:
             if(showTransaction)
             {
                 // Find transaction in wallet
-                interfaces::WalletTx wtx = wallet.getWalletTx(hash);
-                if(!wtx.tx)
+                std::shared_ptr<const interfaces::WalletTx> wtx = wallet.getWalletTx(hash);
+                if(!wtx->tx)
                 {
                     qWarning() << "TransactionTablePriv::updateWallet: Warning: Got CT_NEW, but transaction is not in wallet";
                     break;
@@ -200,10 +208,11 @@ public:
             // If a status update is needed (blocks came in since last check),
             //  update the status of this transaction from the wallet. Otherwise,
             // simply re-use the cached status.
-            interfaces::WalletTxStatus wtx;
+            interfaces::WalletTxStatus wtxStatus;
             int64_t adjustedTime;
-            if (rec->statusUpdateNeeded(numBlocks, parent->getChainLockHeight()) && wallet.tryGetTxStatus(rec->hash, wtx, adjustedTime)) {
-                rec->updateStatus(wtx, numBlocks, adjustedTime, parent->getChainLockHeight());
+            if (rec->statusUpdateNeeded(numBlocks, parent->getChainLockHeight()) && wallet.tryGetTxStatus(rec->hash, wtxStatus, adjustedTime)) {
+                std::shared_ptr<const interfaces::WalletTx> wtx = wallet.getWalletTx(rec->hash);
+                rec->updateStatus(wtx, wtxStatus, numBlocks, adjustedTime, parent->getChainLockHeight());
             }
             return rec;
         }
@@ -388,7 +397,10 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Payment to yourself");
     case TransactionRecord::Generated:
         return tr("Mined");
-
+    case TransactionRecord::FutureSend:
+        return tr("Future Send");
+    case TransactionRecord::FutureReceive:
+        return tr("Future Receive");
     case TransactionRecord::CoinJoinMixing:
         return tr("%1 Mixing").arg("CoinJoin");
     case TransactionRecord::CoinJoinCollateralPayment:
@@ -430,6 +442,8 @@ QString TransactionTableModel::formatTxToAddress(const TransactionRecord *wtx, b
     case TransactionRecord::SendToAddress:
     case TransactionRecord::Generated:
     case TransactionRecord::CoinJoinSend:
+    case TransactionRecord::FutureReceive:
+    case TransactionRecord::FutureSend:
         return formatAddressLabel(wtx->strAddress, wtx->label, tooltip) + watchAddress;
     case TransactionRecord::SendToOther:
         return QString::fromStdString(wtx->strAddress) + watchAddress;
@@ -449,6 +463,8 @@ QVariant TransactionTableModel::addressColor(const TransactionRecord *wtx) const
     case TransactionRecord::Generated:
     case TransactionRecord::CoinJoinSend:
     case TransactionRecord::RecvWithCoinJoin:
+    case TransactionRecord::FutureReceive:
+    case TransactionRecord::FutureSend:
         {
         if (wtx->label.isEmpty()) {
             return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::BAREADDRESS);
@@ -507,8 +523,9 @@ QVariant TransactionTableModel::txStatusDecoration(const TransactionRecord *wtx)
     switch(wtx->status.status)
     {
     case TransactionStatus::OpenUntilBlock:
+        return GUIUtil::getIcon("transaction_locked", GUIUtil::ThemedColor::TX_STATUS_OPENUNTILDATE);
     case TransactionStatus::OpenUntilDate:
-        return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::TX_STATUS_OPENUNTILDATE);
+        return GUIUtil::getIcon("transaction_locked", GUIUtil::ThemedColor::TX_STATUS_OPENUNTILDATE);
     case TransactionStatus::Unconfirmed:
         return GUIUtil::getIcon("transaction_0");
     case TransactionStatus::Abandoned:
@@ -516,11 +533,12 @@ QVariant TransactionTableModel::txStatusDecoration(const TransactionRecord *wtx)
     case TransactionStatus::Confirming:
         switch(wtx->status.depth)
         {
-        case 1: return GUIUtil::getIcon("transaction_1", GUIUtil::ThemedColor::ORANGE);
-        case 2: return GUIUtil::getIcon("transaction_2", GUIUtil::ThemedColor::ORANGE);
-        case 3: return GUIUtil::getIcon("transaction_3", GUIUtil::ThemedColor::ORANGE);
-        case 4: return GUIUtil::getIcon("transaction_4", GUIUtil::ThemedColor::ORANGE);
-        default: return GUIUtil::getIcon("transaction_5", GUIUtil::ThemedColor::ORANGE);
+        case 1:  return GUIUtil::getIcon("transaction_1", GUIUtil::ThemedColor::ORANGE);
+        case 2:  return GUIUtil::getIcon("transaction_2", GUIUtil::ThemedColor::ORANGE);
+        case 3:  return GUIUtil::getIcon("transaction_3", GUIUtil::ThemedColor::ORANGE);
+        case 4:  return GUIUtil::getIcon("transaction_4", GUIUtil::ThemedColor::ORANGE);
+        case 5:  return GUIUtil::getIcon("transaction_5", GUIUtil::ThemedColor::ORANGE);
+        default: return GUIUtil::getIcon("transaction_6", GUIUtil::ThemedColor::ORANGE);
         };
     case TransactionStatus::Confirmed:
         return GUIUtil::getIcon("synced", GUIUtil::ThemedColor::GREEN);
@@ -550,7 +568,8 @@ QString TransactionTableModel::formatTooltip(const TransactionRecord *rec) const
 {
     QString tooltip = formatTxStatus(rec) + QString("\n") + formatTxType(rec);
     if(rec->type==TransactionRecord::RecvFromOther || rec->type==TransactionRecord::SendToOther ||
-       rec->type==TransactionRecord::SendToAddress || rec->type==TransactionRecord::RecvWithAddress)
+       rec->type==TransactionRecord::SendToAddress || rec->type==TransactionRecord::RecvWithAddress ||
+       rec->type==TransactionRecord::FutureSend || rec->type==TransactionRecord::FutureReceive)
     {
         tooltip += QString(" ") + formatTxToAddress(rec, true);
     }
@@ -768,9 +787,7 @@ static std::vector< TransactionNotification > vQueueNotifications;
 
 static void NotifyTransactionChanged(TransactionTableModel *ttm, const uint256 &hash, ChangeType status)
 {
-    // Find transaction in wallet
-    // Determine whether to show transaction or not (determine this here so that no relocking is needed in GUI thread)
-    bool showTransaction = TransactionRecord::showTransaction();
+    bool showTransaction = true;
 
     TransactionNotification notification(hash, status, showTransaction);
 

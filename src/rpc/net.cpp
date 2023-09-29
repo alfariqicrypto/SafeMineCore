@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2021 The Dash Core developers
+// Copyright (c) 2014-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -80,12 +81,12 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
             "    \"addrbind\":\"ip:port\",    (string) Bind address of the connection to the peer\n"
             "    \"addrlocal\":\"ip:port\",   (string) Local address as reported by the peer\n"
             "    \"services\":\"xxxxxxxxxxxxxxxx\",   (string) The services offered\n"
-            "    \"verified_proregtx_hash\": h, (hex) Only present when the peer is a masternode and succesfully\n"
+            "    \"verified_proregtx_hash\": h, (hex) Only present when the peer is a smartnode and succesfully\n"
             "                               authenticated via MNAUTH. In this case, this field contains the\n"
-            "                               protx hash of the masternode\n"
-            "    \"verified_pubkey_hash\":   h, (hex) Only present when the peer is a masternode and succesfully\n"
+            "                               protx hash of the smartnode\n"
+            "    \"verified_pubkey_hash\":   h, (hex) Only present when the peer is a smartnode and succesfully\n"
             "                               authenticated via MNAUTH. In this case, this field contains the\n"
-            "                               hash of the masternode's operator public key\n"
+            "                               hash of the smartnode's operator public key\n"
             "    \"relaytxes\":true|false,    (boolean) Whether peer has asked us to relay transactions to it\n"
             "    \"lastsend\": ttt,           (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last send\n"
             "    \"lastrecv\": ttt,           (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last receive\n"
@@ -97,10 +98,10 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
             "    \"minping\": n,              (numeric) minimum observed ping time (if any at all)\n"
             "    \"pingwait\": n,             (numeric) ping wait (if non-zero)\n"
             "    \"version\": v,              (numeric) The peer version, such as 70001\n"
-            "    \"subver\": \"/SafeMine Core:x.x.x/\",  (string) The string version\n"
+            "    \"subver\": \"/Safeminemore Core:x.x.x/\",  (string) The string version\n"
             "    \"inbound\": true|false,     (boolean) Inbound (true) or Outbound (false)\n"
             "    \"addnode\": true|false,     (boolean) Whether connection was due to addnode/-connect or if it was an automatic/inbound connection\n"
-            "    \"masternode\": true|false,  (boolean) Whether connection was due to masternode connection attempt\n"
+            "    \"smartnode\": true|false,   (boolean) Whether connection was due to smartnode connection attempt\n"
             "    \"startingheight\": n,       (numeric) The starting height (block) of the peer\n"
             "    \"banscore\": n,             (numeric) The ban score\n"
             "    \"synced_headers\": n,       (numeric) The last header we have in common with this peer\n"
@@ -171,7 +172,7 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
         obj.pushKV("subver", stats.cleanSubVer);
         obj.pushKV("inbound", stats.fInbound);
         obj.pushKV("addnode", stats.m_manual_connection);
-        obj.pushKV("masternode", stats.m_masternode_connection);
+        obj.pushKV("smartnode", stats.m_smartnode_connection);
         obj.pushKV("startingheight", stats.nStartingHeight);
         if (fStateStats) {
             obj.pushKV("banscore", statestats.nMisbehavior);
@@ -222,8 +223,8 @@ UniValue addnode(const JSONRPCRequest& request)
             "1. \"node\"     (string, required) The node (see getpeerinfo for nodes)\n"
             "2. \"command\"  (string, required) 'add' to add a node to the list, 'remove' to remove a node from the list, 'onetry' to try a connection to the node once\n"
             "\nExamples:\n"
-            + HelpExampleCli("addnode", "\"192.168.0.6:38458\" \"onetry\"")
-            + HelpExampleRpc("addnode", "\"192.168.0.6:38458\", \"onetry\"")
+            + HelpExampleCli("addnode", "\"192.168.0.6:9999\" \"onetry\"")
+            + HelpExampleRpc("addnode", "\"192.168.0.6:9999\", \"onetry\"")
         );
 
     if(!g_connman)
@@ -264,9 +265,9 @@ UniValue disconnectnode(const JSONRPCRequest& request)
             "1. \"address\"     (string, optional) The IP address/port of the node\n"
             "2. \"nodeid\"      (number, optional) The node ID (see getpeerinfo for node IDs)\n"
             "\nExamples:\n"
-            + HelpExampleCli("disconnectnode", "\"192.168.0.6:38458\"")
+            + HelpExampleCli("disconnectnode", "\"192.168.0.6:9999\"")
             + HelpExampleCli("disconnectnode", "\"\" 1")
-            + HelpExampleRpc("disconnectnode", "\"192.168.0.6:38458\"")
+            + HelpExampleRpc("disconnectnode", "\"192.168.0.6:9999\"")
             + HelpExampleRpc("disconnectnode", "\"\", 1")
         );
 
@@ -311,7 +312,7 @@ UniValue getaddednodeinfo(const JSONRPCRequest& request)
             "    \"connected\" : true|false,          (boolean) If connected\n"
             "    \"addresses\" : [                    (list of objects) Only when connected = true\n"
             "       {\n"
-            "         \"address\" : \"192.168.0.201:38458\",  (string) The safemine server IP and port we're connected to\n"
+            "         \"address\" : \"192.168.0.201:9999\",  (string) The safeminemore server IP and port we're connected to\n"
             "         \"connected\" : \"outbound\"           (string) connection, inbound or outbound\n"
             "       }\n"
             "     ]\n"
@@ -439,7 +440,7 @@ UniValue getnetworkinfo(const JSONRPCRequest& request)
             "{\n"
             "  \"version\": xxxxx,                      (numeric) the server version\n"
             "  \"buildversion\": \"x.x.x.x-xxx\",         (string) the server build version including RC info or commit as relevant\n"
-            "  \"subversion\": \"/SafeMine Core:x.x.x.x/\",   (string) the server subversion string\n"
+            "  \"subversion\": \"/Safeminemore Core:x.x.x.x/\",   (string) the server subversion string\n"
             "  \"protocolversion\": xxxxx,              (numeric) the protocol version\n"
             "  \"localservices\": \"xxxxxxxxxxxxxxxx\", (string) the services we offer to the network\n"
             "  \"localrelay\": true|false,              (bool) true if transaction relay is requested from peers\n"

@@ -1,4 +1,5 @@
-// Copyright (c) 2018-2021 The Dash Core developers
+// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2020-2022 The Safeminemore developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,8 +11,8 @@
 
 #include <evo/specialtx.h>
 
-#include <masternode/activemasternode.h>
-#include <masternode/masternode-meta.h>
+#include <smartnode/activesmartnode.h>
+#include <smartnode/smartnode-meta.h>
 #include <chainparams.h>
 #include <netmessagemaker.h>
 #include <univalue.h>
@@ -53,7 +54,7 @@ static double GetSimulatedErrorRate(const std::string& type)
 
 bool CDKGSession::ShouldSimulateError(const std::string& type)
 {
-    if (params.type != Consensus::LLMQType::LLMQ_TEST) {
+    if (params.type != Consensus::LLMQType::LLMQ_5_60) {
         return false;
     }
     double rate = GetSimulatedErrorRate(type);
@@ -190,7 +191,8 @@ void CDKGSession::SendContributions(CDKGPendingMessages& pendingMessages)
             skContrib.MakeNewKey();
         }
 
-        if (!qc.contributions->Encrypt(i, m->dmn->pdmnState->pubKeyOperator.Get(), skContrib, PROTOCOL_VERSION)) {
+        int minSmartnodeProtoVersion =  Params().IsFutureActive(chainActive.Tip()) ? MIN_SMARTNODE_PROTO_VERSION : OLD_MIN_SMARTNODE_PROTO_VERSION;
+        if (!qc.contributions->Encrypt(i, m->dmn->pdmnState->pubKeyOperator.Get(), skContrib, minSmartnodeProtoVersion)) {
             logger.Batch("failed to encrypt contribution for %s", m->dmn->proTxHash.ToString());
             return;
         }
@@ -198,7 +200,7 @@ void CDKGSession::SendContributions(CDKGPendingMessages& pendingMessages)
 
     logger.Batch("encrypted contributions. time=%d", t1.count());
 
-    qc.sig = activeMasternodeInfo.blsKeyOperator->Sign(qc.GetSignHash());
+    qc.sig = activeSmartnodeInfo.blsKeyOperator->Sign(qc.GetSignHash());
 
     logger.Flush();
 
@@ -323,7 +325,8 @@ void CDKGSession::ReceiveMessage(const CDKGContribution& qc, bool& retBan)
 
     bool complain = false;
     CBLSSecretKey skContribution;
-    if (!qc.contributions->Decrypt(myIdx, *activeMasternodeInfo.blsKeyOperator, skContribution, PROTOCOL_VERSION)) {
+    int minSmartnodeProtoVersion =  Params().IsFutureActive(chainActive.Tip()) ? MIN_SMARTNODE_PROTO_VERSION : OLD_MIN_SMARTNODE_PROTO_VERSION;
+    if (!qc.contributions->Decrypt(myIdx, *activeSmartnodeInfo.blsKeyOperator, skContribution, minSmartnodeProtoVersion)) {
         logger.Batch("contribution from %s could not be decrypted", member->dmn->proTxHash.ToString());
         complain = true;
     } else if (member->idx != myIdx && ShouldSimulateError("complain-lie")) {
@@ -472,6 +475,7 @@ void CDKGSession::VerifyConnectionAndMinProtoVersions()
     });
 
     bool fShouldAllMembersBeConnected = CLLMQUtils::IsAllMembersConnectedEnabled(params.type);
+    int minSmartnodeProtoVersion =  Params().IsFutureActive(chainActive.Tip()) ? MIN_SMARTNODE_PROTO_VERSION : OLD_MIN_SMARTNODE_PROTO_VERSION;
     for (auto& m : members) {
         if (m->dmn->proTxHash == myProTxHash) {
             continue;
@@ -481,9 +485,9 @@ void CDKGSession::VerifyConnectionAndMinProtoVersions()
         if (it == protoMap.end()) {
             m->badConnection = fShouldAllMembersBeConnected;
             logger.Batch("%s is not connected to us, badConnection=%b", m->dmn->proTxHash.ToString(), m->badConnection);
-        } else if (it != protoMap.end() && it->second < MIN_MASTERNODE_PROTO_VERSION) {
+        } else if (it != protoMap.end() && it->second < minSmartnodeProtoVersion) {
             m->badConnection = true;
-            logger.Batch("%s does not have min proto version %d (has %d)", m->dmn->proTxHash.ToString(), MIN_MASTERNODE_PROTO_VERSION, it->second);
+            logger.Batch("%s does not have min proto version %d (has %d)", m->dmn->proTxHash.ToString(), minSmartnodeProtoVersion, it->second);
         }
 
         auto lastOutbound = mmetaman.GetMetaInfo(m->dmn->proTxHash)->GetLastOutboundSuccess();
@@ -524,7 +528,7 @@ void CDKGSession::SendComplaint(CDKGPendingMessages& pendingMessages)
 
     logger.Batch("sending complaint. badCount=%d, complaintCount=%d", badCount, complaintCount);
 
-    qc.sig = activeMasternodeInfo.blsKeyOperator->Sign(qc.GetSignHash());
+    qc.sig = activeSmartnodeInfo.blsKeyOperator->Sign(qc.GetSignHash());
 
     logger.Flush();
 
@@ -722,7 +726,7 @@ void CDKGSession::SendJustification(CDKGPendingMessages& pendingMessages, const 
         return;
     }
 
-    qj.sig = activeMasternodeInfo.blsKeyOperator->Sign(qj.GetSignHash());
+    qj.sig = activeSmartnodeInfo.blsKeyOperator->Sign(qj.GetSignHash());
 
     logger.Flush();
 
@@ -1024,7 +1028,7 @@ void CDKGSession::SendCommitment(CDKGPendingMessages& pendingMessages)
         (*commitmentHash.begin())++;
     }
 
-    qc.sig = activeMasternodeInfo.blsKeyOperator->Sign(commitmentHash);
+    qc.sig = activeSmartnodeInfo.blsKeyOperator->Sign(commitmentHash);
     qc.quorumSig = skShare.Sign(commitmentHash);
 
     if (lieType == 3) {
