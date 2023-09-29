@@ -1,6 +1,6 @@
 ### TestGen ###
 
-Utilities to generate test vectors for the data-driven SafeMine tests.
+Utilities to generate test vectors for the data-driven Safeminemore tests.
 
 Usage: 
 

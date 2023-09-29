@@ -1,11 +1,11 @@
 Sample configuration files for:
 ```
-SystemD: safemined.service
-Upstart: safemined.conf
-OpenRC:  safemined.openrc
-         safemined.openrcconf
-CentOS:  safemined.init
-OS X:    org.safemine.safemined.plist
+SystemD: safeminemored.service
+Upstart: safeminemored.conf
+OpenRC:  safeminemored.openrc
+         safeminemored.openrcconf
+CentOS:  safeminemored.init
+OS X:    org.safeminemore.safeminemored.plist
 ```
 have been made available to assist packagers in creating node packages here.
 

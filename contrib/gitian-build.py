@@ -23,13 +23,13 @@ def setup():
             exit(1)
     subprocess.check_call(['sudo', 'apt-get', 'install', '-qq'] + programs)
     if not os.path.isdir('gitian.sigs'):
-        subprocess.check_call(['git', 'clone', 'https://github.com/safeminepay/gitian.sigs.git'])
-    if not os.path.isdir('safemine-detached-sigs'):
-        subprocess.check_call(['git', 'clone', 'https://github.com/safeminepay/safemine-detached-sigs.git'])
+        subprocess.check_call(['git', 'clone', 'https://github.com/safeminemore/gitian.sigs.git'])
+    if not os.path.isdir('safeminemore-detached-sigs'):
+        subprocess.check_call(['git', 'clone', 'https://github.com/safeminemore/safeminemore-detached-sigs.git'])
     if not os.path.isdir('gitian-builder'):
         subprocess.check_call(['git', 'clone', 'https://github.com/devrandom/gitian-builder.git'])
-    if not os.path.isdir('safemine'):
-        subprocess.check_call(['git', 'clone', 'https://github.com/safeminepay/safemine.git'])
+    if not os.path.isdir('safeminemore'):
+        subprocess.check_call(['git', 'clone', 'https://github.com/safeminemore/safeminemore.git'])
     os.chdir('gitian-builder')
     make_image_prog = ['bin/make-base-vm', '--suite', 'bionic', '--arch', 'amd64']
     if args.docker:
@@ -46,36 +46,36 @@ def setup():
 def build():
     global args, workdir
 
-    os.makedirs('safemine-binaries/' + args.version, exist_ok=True)
+    os.makedirs('safeminemorecore-binaries/' + args.version, exist_ok=True)
     print('\nBuilding Dependencies\n')
     os.chdir('gitian-builder')
     os.makedirs('inputs', exist_ok=True)
 
     subprocess.check_call(['wget', '-O', 'inputs/osslsigncode-2.0.tar.gz', 'https://github.com/mtrojnar/osslsigncode/archive/2.0.tar.gz'])
     subprocess.check_call(["echo '5a60e0a4b3e0b4d655317b2f12a810211c50242138322b16e7e01c6fbb89d92f inputs/osslsigncode-2.0.tar.gz' | sha256sum -c"], shell=True)
-    subprocess.check_call(['make', '-C', '../safemine/depends', 'download', 'SOURCES_PATH=' + os.getcwd() + '/cache/common'])
+    subprocess.check_call(['make', '-C', '../safeminemore/depends', 'download', 'SOURCES_PATH=' + os.getcwd() + '/cache/common'])
 
     if args.linux:
         print('\nCompiling ' + args.version + ' Linux')
-        subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'safemine='+args.commit, '--url', 'safemine='+args.url, '../safemine/contrib/gitian-descriptors/gitian-linux.yml'])
-        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-linux', '--destination', '../gitian.sigs/', '../safemine/contrib/gitian-descriptors/gitian-linux.yml'])
-        subprocess.check_call('mv build/out/safemine-*.tar.gz build/out/src/safemine-*.tar.gz ../safemine-binaries/'+args.version, shell=True)
+        subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'safeminemore='+args.commit, '--url', 'safeminemore='+args.url, '../safeminemore/contrib/gitian-descriptors/gitian-linux.yml'])
+        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-linux', '--destination', '../gitian.sigs/', '../safeminemore/contrib/gitian-descriptors/gitian-linux.yml'])
+        subprocess.check_call('mv build/out/safeminemorecore-*.tar.gz build/out/src/safeminemorecore-*.tar.gz ../safeminemorecore-binaries/'+args.version, shell=True)
 
     if args.windows:
         print('\nCompiling ' + args.version + ' Windows')
-        subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'safemine='+args.commit, '--url', 'safemine='+args.url, '../safemine/contrib/gitian-descriptors/gitian-win.yml'])
-        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-win-unsigned', '--destination', '../gitian.sigs/', '../safemine/contrib/gitian-descriptors/gitian-win.yml'])
-        subprocess.check_call('mv build/out/safemine-*-win-unsigned.tar.gz inputs/safemine-win-unsigned.tar.gz', shell=True)
-        subprocess.check_call('mv build/out/safemine-*.zip build/out/safemine-*.exe ../safemine-binaries/'+args.version, shell=True)
+        subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'safeminemore='+args.commit, '--url', 'safeminemore='+args.url, '../safeminemore/contrib/gitian-descriptors/gitian-win.yml'])
+        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-win-unsigned', '--destination', '../gitian.sigs/', '../safeminemore/contrib/gitian-descriptors/gitian-win.yml'])
+        subprocess.check_call('mv build/out/safeminemorecore-*-win-unsigned.tar.gz inputs/safeminemorecore-win-unsigned.tar.gz', shell=True)
+        subprocess.check_call('mv build/out/safeminemorecore-*.zip build/out/safeminemorecore-*.exe ../safeminemorecore-binaries/'+args.version, shell=True)
 
     if args.macos:
         print('\nCompiling ' + args.version + ' MacOS')
         subprocess.check_call(['wget', '-N', '-P', 'inputs', 'https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz'])
         subprocess.check_output(["echo 'bec9d089ebf2e2dd59b1a811a38ec78ebd5da18cbbcd6ab39d1e59f64ac5033f inputs/MacOSX10.11.sdk.tar.gz' | sha256sum -c"], shell=True)
-        subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'safemine='+args.commit, '--url', 'safemine='+args.url, '../safemine/contrib/gitian-descriptors/gitian-osx.yml'])
-        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-osx-unsigned', '--destination', '../gitian.sigs/', '../safemine/contrib/gitian-descriptors/gitian-osx.yml'])
-        subprocess.check_call('mv build/out/safemine-*-osx-unsigned.tar.gz inputs/safemine-osx-unsigned.tar.gz', shell=True)
-        subprocess.check_call('mv build/out/safemine-*.tar.gz build/out/safemine-*.dmg ../safemine-binaries/'+args.version, shell=True)
+        subprocess.check_call(['bin/gbuild', '-j', args.jobs, '-m', args.memory, '--commit', 'safeminemore='+args.commit, '--url', 'safeminemore='+args.url, '../safeminemore/contrib/gitian-descriptors/gitian-osx.yml'])
+        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-osx-unsigned', '--destination', '../gitian.sigs/', '../safeminemore/contrib/gitian-descriptors/gitian-osx.yml'])
+        subprocess.check_call('mv build/out/safeminemorecore-*-osx-unsigned.tar.gz inputs/safeminemorecore-osx-unsigned.tar.gz', shell=True)
+        subprocess.check_call('mv build/out/safeminemorecore-*.tar.gz build/out/safeminemorecore-*.dmg ../safeminemorecore-binaries/'+args.version, shell=True)
 
     os.chdir(workdir)
 
@@ -94,16 +94,16 @@ def sign():
 
     if args.windows:
         print('\nSigning ' + args.version + ' Windows')
-        subprocess.check_call(['bin/gbuild', '-i', '--commit', 'signature='+args.commit, '../safemine/contrib/gitian-descriptors/gitian-win-signer.yml'])
-        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-win-signed', '--destination', '../gitian.sigs/', '../safemine/contrib/gitian-descriptors/gitian-win-signer.yml'])
-        subprocess.check_call('mv build/out/safemine-*win64-setup.exe ../safemine-binaries/'+args.version, shell=True)
-        subprocess.check_call('mv build/out/safemine-*win32-setup.exe ../safemine-binaries/'+args.version, shell=True)
+        subprocess.check_call(['bin/gbuild', '-i', '--commit', 'signature='+args.commit, '../safeminemore/contrib/gitian-descriptors/gitian-win-signer.yml'])
+        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-win-signed', '--destination', '../gitian.sigs/', '../safeminemore/contrib/gitian-descriptors/gitian-win-signer.yml'])
+        subprocess.check_call('mv build/out/safeminemorecore-*win64-setup.exe ../safeminemorecore-binaries/'+args.version, shell=True)
+        subprocess.check_call('mv build/out/safeminemorecore-*win32-setup.exe ../safeminemorecore-binaries/'+args.version, shell=True)
 
     if args.macos:
         print('\nSigning ' + args.version + ' MacOS')
-        subprocess.check_call(['bin/gbuild', '-i', '--commit', 'signature='+args.commit, '../safemine/contrib/gitian-descriptors/gitian-osx-signer.yml'])
-        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-osx-signed', '--destination', '../gitian.sigs/', '../safemine/contrib/gitian-descriptors/gitian-osx-signer.yml'])
-        subprocess.check_call('mv build/out/safemine-osx-signed.dmg ../safemine-binaries/'+args.version+'/safemine-'+args.version+'-osx.dmg', shell=True)
+        subprocess.check_call(['bin/gbuild', '-i', '--commit', 'signature='+args.commit, '../safeminemore/contrib/gitian-descriptors/gitian-osx-signer.yml'])
+        subprocess.check_call(['bin/gsign', '-p', args.sign_prog, '--signer', args.signer, '--release', args.version+'-osx-signed', '--destination', '../gitian.sigs/', '../safeminemore/contrib/gitian-descriptors/gitian-osx-signer.yml'])
+        subprocess.check_call('mv build/out/safeminemorecore-osx-signed.dmg ../safeminemorecore-binaries/'+args.version+'/safeminemorecore-'+args.version+'-osx.dmg', shell=True)
 
     os.chdir(workdir)
 
@@ -120,15 +120,15 @@ def verify():
     os.chdir('gitian-builder')
 
     print('\nVerifying v'+args.version+' Linux\n')
-    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-linux', '../safemine/contrib/gitian-descriptors/gitian-linux.yml'])
+    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-linux', '../safeminemore/contrib/gitian-descriptors/gitian-linux.yml'])
     print('\nVerifying v'+args.version+' Windows\n')
-    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-win-unsigned', '../safemine/contrib/gitian-descriptors/gitian-win.yml'])
+    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-win-unsigned', '../safeminemore/contrib/gitian-descriptors/gitian-win.yml'])
     print('\nVerifying v'+args.version+' MacOS\n')
-    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-osx-unsigned', '../safemine/contrib/gitian-descriptors/gitian-osx.yml'])
+    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-osx-unsigned', '../safeminemore/contrib/gitian-descriptors/gitian-osx.yml'])
     print('\nVerifying v'+args.version+' Signed Windows\n')
-    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-win-signed', '../safemine/contrib/gitian-descriptors/gitian-win-signer.yml'])
+    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-win-signed', '../safeminemore/contrib/gitian-descriptors/gitian-win-signer.yml'])
     print('\nVerifying v'+args.version+' Signed MacOS\n')
-    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-osx-signed', '../safemine/contrib/gitian-descriptors/gitian-osx-signer.yml'])
+    subprocess.call(['bin/gverify', '-v', '-d', '../gitian.sigs/', '-r', args.version+'-osx-signed', '../safeminemore/contrib/gitian-descriptors/gitian-osx-signer.yml'])
 
     os.chdir(workdir)
 
@@ -138,7 +138,7 @@ def main():
     parser = argparse.ArgumentParser(usage='%(prog)s [options] signer version')
     parser.add_argument('-c', '--commit', action='store_true', dest='commit', help='Indicate that the version argument is for a commit or branch')
     parser.add_argument('-p', '--pull', action='store_true', dest='pull', help='Indicate that the version argument is the number of a github repository pull request')
-    parser.add_argument('-u', '--url', dest='url', default='https://github.com/safeminepay/safemine', help='Specify the URL of the repository. Default is %(default)s')
+    parser.add_argument('-u', '--url', dest='url', default='https://github.com/safeminemore/safeminemore', help='Specify the URL of the repository. Default is %(default)s')
     parser.add_argument('-v', '--verify', action='store_true', dest='verify', help='Verify the Gitian build')
     parser.add_argument('-b', '--build', action='store_true', dest='build', help='Do a Gitian build')
     parser.add_argument('-s', '--sign', action='store_true', dest='sign', help='Make signed binaries for Windows and MacOS')
@@ -214,10 +214,10 @@ def main():
     if not args.build and not args.sign and not args.verify:
         exit(0)
 
-    os.chdir('safemine')
+    os.chdir('safeminemore')
     if args.pull:
         subprocess.check_call(['git', 'fetch', args.url, 'refs/pull/'+args.version+'/merge'])
-        os.chdir('../gitian-builder/inputs/safemine')
+        os.chdir('../gitian-builder/inputs/safeminemore')
         subprocess.check_call(['git', 'fetch', args.url, 'refs/pull/'+args.version+'/merge'])
         args.commit = subprocess.check_output(['git', 'show', '-s', '--format=%H', 'FETCH_HEAD'], universal_newlines=True, encoding='utf8').strip()
         args.version = 'pull-' + args.version

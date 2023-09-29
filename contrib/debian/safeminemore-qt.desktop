@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Safeminemore Core
+Comment=Safeminemore P2P Cryptocurrency
+Comment[de]=Verbinde mit dem Safeminemore peer-to-peer Netzwerk
+Comment[fr]=Safeminemore, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Safeminemore, eşten eşe kriptografik sanal para birimi
+Exec=safeminemore-qt %u
+Terminal=false
+Type=Application
+Icon=safeminemore128
+MimeType=x-scheme-handler/safeminemore;
+Categories=Office;Finance;

@@ -1,6 +1,0 @@
-usr/local/bin/safemine-qt usr/bin
-share/pixmaps/safemine32.xpm usr/share/pixmaps
-share/pixmaps/safemine16.xpm usr/share/pixmaps
-share/pixmaps/safemine128.png usr/share/pixmaps
-debian/safemine-qt.desktop usr/share/applications
-debian/safemine-qt.protocol usr/share/kde4/services/

@@ -1,21 +1,21 @@
 
 Debian
 ====================
-This directory contains files used to package safemined/safemine-qt
-for Debian-based Linux systems. If you compile safemined/safemine-qt yourself, there are some useful files here.
+This directory contains files used to package safeminemored/safeminemore-qt
+for Debian-based Linux systems. If you compile safeminemored/safeminemore-qt yourself, there are some useful files here.
 
-## safemine: URI support ##
+## safeminemore: URI support ##
 
 
-safemine-qt.desktop  (Gnome / Open Desktop)
+safeminemore-qt.desktop  (Gnome / Open Desktop)
 To install:
 
-	sudo desktop-file-install safemine-qt.desktop
+	sudo desktop-file-install safeminemore-qt.desktop
 	sudo update-desktop-database
 
 If you build yourself, you will either need to modify the paths in
-the .desktop file or copy or symlink your safemine-qt binary to `/usr/bin`
-and the `../../share/pixmaps/safemine128.png` to `/usr/share/pixmaps`
+the .desktop file or copy or symlink your safeminemore-qt binary to `/usr/bin`
+and the `../../share/pixmaps/safeminemore128.png` to `/usr/share/pixmaps`
 
-safemine-qt.protocol (KDE)
+safeminemore-qt.protocol (KDE)
 

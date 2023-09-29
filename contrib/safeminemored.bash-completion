@@ -1,15 +1,15 @@
-# bash programmable completion for safemined(1) and safemine-qt(1)
+# bash programmable completion for safeminemored(1) and safeminemore-qt(1)
 # Copyright (c) 2012-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-_safemined() {
+_safeminemored() {
     local cur prev words=() cword
-    local safemined
+    local safeminemored
 
-    # save and use original argument to invoke safemined for -help
+    # save and use original argument to invoke safeminemored for -help
     # it might not be in $PATH
-    safemined="$1"
+    safeminemored="$1"
 
     COMPREPLY=()
     _get_comp_words_by_ref -n = cur prev words cword
@@ -33,7 +33,7 @@ _safemined() {
             # only parse -help if sensible
             if [[ -z "$cur" || "$cur" =~ ^- ]]; then
                 local helpopts
-                helpopts=$($safemined -help 2>&1 | awk '$1 ~ /^-/ { sub(/=.*/, "="); print $1 }' )
+                helpopts=$($safeminemored -help 2>&1 | awk '$1 ~ /^-/ { sub(/=.*/, "="); print $1 }' )
                 COMPREPLY=( $( compgen -W "$helpopts" -- "$cur" ) )
             fi
 
@@ -45,7 +45,7 @@ _safemined() {
             ;;
     esac
 } &&
-complete -F _safemined safemined safemine-qt
+complete -F _safeminemored safeminemored safeminemore-qt
 
 # Local variables:
 # mode: shell-script

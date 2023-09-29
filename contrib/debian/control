@@ -1,8 +1,8 @@
-Source: safemine
+Source: safeminemore
 Section: utils
 Priority: optional
-Maintainer: Holger Schinzel <holger@safemine.org>
-Uploaders: Holger Schinzel <holger@safemine.org>
+Maintainer: Holger Schinzel <holger@safeminemore.org>
+Uploaders: Holger Schinzel <holger@safeminemore.org>
 Build-Depends: debhelper,
  devscripts,
  automake,
@@ -26,45 +26,45 @@ Build-Depends: debhelper,
  python,
  libzmq3-dev
 Standards-Version: 3.9.2
-Homepage: https://www.safemine.org/
-Vcs-Git: git://github.com/safeminepay/safemine.git
-Vcs-Browser: https://github.com/safeminepay/safemine
+Homepage: https://www.safeminemore.org/
+Vcs-Git: git://github.com/safeminemore/safeminemore.git
+Vcs-Browser: https://github.com/safeminemore/safeminemore
 
-Package: safemined
+Package: safeminemored
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer network based digital currency - daemon
- SafeMine is an experimental new digital currency that enables instant, private
- payments to anyone, anywhere in the world. SafeMine uses peer-to-peer
+ Safeminemore is an experimental new digital currency that enables instant, private
+ payments to anyone, anywhere in the world. Safeminemore uses peer-to-peer
  technology to operate with no central authority: managing transactions
- and issuing money are carried out collectively by the network. SafeMine Core
+ and issuing money are carried out collectively by the network. Safeminemore Core
  is the name of the open source software which enables the use of this currency.
  .
- This package provides the daemon, safemined, and the CLI tool
- safemine-cli to interact with the daemon.
+ This package provides the daemon, safeminemored, and the CLI tool
+ safeminemore-cli to interact with the daemon.
 
-Package: safemine-qt
+Package: safeminemore-qt
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer network based digital currency - Qt GUI
- SafeMine is an experimental new digital currency that enables instant, private
- payments to anyone, anywhere in the world. SafeMine uses peer-to-peer
+ Safeminemore is an experimental new digital currency that enables instant, private
+ payments to anyone, anywhere in the world. Safeminemore uses peer-to-peer
  technology to operate with no central authority: managing transactions
- and issuing money are carried out collectively by the network. SafeMine Core
+ and issuing money are carried out collectively by the network. Safeminemore Core
  is the name of the open source software which enables the use of this currency.
  .
- This package provides SafeMine-Qt, a GUI for SafeMine based on Qt.
+ This package provides Safeminemore-Qt, a GUI for Safeminemore based on Qt.
 
-Package: safemine-tx
+Package: safeminemore-tx
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: peer-to-peer digital currency - standalone transaction tool
- SafeMine is an experimental new digital currency that enables instant, private
- payments to anyone, anywhere in the world. SafeMine uses peer-to-peer
+ Safeminemore is an experimental new digital currency that enables instant, private
+ payments to anyone, anywhere in the world. Safeminemore uses peer-to-peer
  technology to operate with no central authority: managing transactions
- and issuing money are carried out collectively by the network. SafeMine Core
+ and issuing money are carried out collectively by the network. Safeminemore Core
  is the name of the open source software which enables the use of this currency.
  .
- This package provides safemine-tx, a command-line transaction creation
- tool which can be used without a safemine daemon.  Some means of
+ This package provides safeminemore-tx, a command-line transaction creation
+ tool which can be used without a safeminemore daemon.  Some means of
  exchanging minimal transaction data with peers is still required.

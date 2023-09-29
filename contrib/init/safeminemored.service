@@ -1,0 +1,22 @@
+[Unit]
+Description=Safeminemore's distributed currency daemon
+After=network.target
+
+[Service]
+User=safeminemorecore
+Group=safeminemorecore
+
+Type=forking
+PIDFile=/var/lib/safeminemored/safeminemored.pid
+ExecStart=/usr/bin/safeminemored -daemon -pid=/var/lib/safeminemored/safeminemored.pid \
+-conf=/etc/safeminemorecore/safeminemore.conf -datadir=/var/lib/safeminemored -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

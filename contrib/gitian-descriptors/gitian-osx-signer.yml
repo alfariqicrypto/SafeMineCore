@@ -1,5 +1,5 @@
 ---
-name: "safemine-dmg-signer"
+name: "safeminemore-dmg-signer"
 suites:
 - "bionic"
 architectures:
@@ -7,10 +7,10 @@ architectures:
 packages:
 - "faketime"
 remotes:
-- "url": "https://github.com/safeminepay/safemine-detached-sigs.git"
+- "url": "https://github.com/safeminemore/safeminemore-detached-sigs.git"
   "dir": "signature"
 files:
-- "safemine-osx-unsigned.tar.gz"
+- "safeminemorecore-osx-unsigned.tar.gz"
 script: |
   WRAP_DIR=$HOME/wrapped
   mkdir -p ${WRAP_DIR}
@@ -27,8 +27,8 @@ script: |
     chmod +x ${WRAP_DIR}/${prog}
   done
 
-  UNSIGNED=safemine-osx-unsigned.tar.gz
-  SIGNED=safemine-osx-signed.dmg
+  UNSIGNED=safeminemorecore-osx-unsigned.tar.gz
+  SIGNED=safeminemorecore-osx-signed.dmg
 
   tar -xf ${UNSIGNED}
   OSX_VOLNAME="$(cat osx_volname)"

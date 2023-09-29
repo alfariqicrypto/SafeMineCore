@@ -1,0 +1,6 @@
+usr/local/bin/safeminemore-qt usr/bin
+share/pixmaps/safeminemore32.xpm usr/share/pixmaps
+share/pixmaps/safeminemore16.xpm usr/share/pixmaps
+share/pixmaps/safeminemore128.png usr/share/pixmaps
+debian/safeminemore-qt.desktop usr/share/applications
+debian/safeminemore-qt.protocol usr/share/kde4/services/

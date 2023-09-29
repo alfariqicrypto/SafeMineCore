@@ -1,6 +1,6 @@
 [Protocol]
-exec=safemine-qt '%u'
-protocol=safemine
+exec=safeminemore-qt '%u'
+protocol=safeminemore
 input=none
 output=none
 helper=true

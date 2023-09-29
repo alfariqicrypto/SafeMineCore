@@ -8,7 +8,7 @@ FORMS += \
     ../src/qt/forms/editaddressdialog.ui \
     ../src/qt/forms/helpmessagedialog.ui \
     ../src/qt/forms/intro.ui \
-    ../src/qt/forms/masternodelist.ui \
+    ../src/qt/forms/smartnodelist.ui \
     ../src/qt/forms/qrdialog.ui \
     ../src/qt/forms/openuridialog.ui \
     ../src/qt/forms/optionsdialog.ui \
@@ -21,4 +21,4 @@ FORMS += \
     ../src/qt/forms/transactiondescdialog.ui
 
 RESOURCES += \
-    ../src/qt/safemine.qrc
+    ../src/qt/safeminemore.qrc

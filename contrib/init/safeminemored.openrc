@@ -2,26 +2,26 @@
 
 # backward compatibility for existing gentoo layout 
 #
-if [ -d "/var/lib/safemine/.safemine" ]; then
-	BITCOIND_DEFAULT_DATADIR="/var/lib/safemine/.safemine"
+if [ -d "/var/lib/safeminemorecore/.safeminemorecore" ]; then
+	BITCOIND_DEFAULT_DATADIR="/var/lib/safeminemorecore/.safeminemorecore"
 else
-	BITCOIND_DEFAULT_DATADIR="/var/lib/safemined"
+	BITCOIND_DEFAULT_DATADIR="/var/lib/safeminemored"
 fi
 
-BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/safemine/safemine.conf}
-BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/safemined}
-BITCOIND_PIDFILE=${BITCOIND_PIDFILE:-${BITCOIND_PIDDIR}/safemined.pid}
+BITCOIND_CONFIGFILE=${BITCOIND_CONFIGFILE:-/etc/safeminemorecore/safeminemore.conf}
+BITCOIND_PIDDIR=${BITCOIND_PIDDIR:-/var/run/safeminemored}
+BITCOIND_PIDFILE=${BITCOIND_PIDFILE:-${BITCOIND_PIDDIR}/safeminemored.pid}
 BITCOIND_DATADIR=${BITCOIND_DATADIR:-${BITCOIND_DEFAULT_DATADIR}}
-BITCOIND_USER=${BITCOIND_USER:-${BITCOIN_USER:-safemine}}
-BITCOIND_GROUP=${BITCOIND_GROUP:-safemine}
-BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/safemined}
+BITCOIND_USER=${BITCOIND_USER:-${BITCOIN_USER:-safeminemorecore}}
+BITCOIND_GROUP=${BITCOIND_GROUP:-safeminemorecore}
+BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/safeminemored}
 BITCOIND_NICE=${BITCOIND_NICE:-${NICELEVEL:-0}}
 BITCOIND_OPTS="${BITCOIND_OPTS:-${BITCOIN_OPTS}}"
 
-name="SafeMine Core Daemon"
-description="SafeMine cryptocurrency P2P network daemon"
+name="Safeminemore Core Daemon"
+description="Safeminemore cryptocurrency P2P network daemon"
 
-command="/usr/bin/safemined"
+command="/usr/bin/safeminemored"
 command_args="-pid=\"${BITCOIND_PIDFILE}\" \
 		-conf=\"${BITCOIND_CONFIGFILE}\" \
 		-datadir=\"${BITCOIND_DATADIR}\" \
@@ -71,7 +71,7 @@ checkconfig()
 {
 	if ! grep -qs '^rpcpassword=' "${BITCOIND_CONFIGFILE}" ; then
 		eerror ""
-		eerror "ERROR: You must set a secure rpcpassword to run safemined."
+		eerror "ERROR: You must set a secure rpcpassword to run safeminemored."
 		eerror "The setting must appear in ${BITCOIND_CONFIGFILE}"
 		eerror ""
 		eerror "This password is security critical to securing wallets "
@@ -84,7 +84,7 @@ checkconfig()
 		eerror "It is recommended that you also set alertnotify so you are "
 		eerror "notified of problems:"
 		eerror ""
-		eerror "ie: alertnotify=echo %%s | mail -s \"SafeMine Core Alert\"" \
+		eerror "ie: alertnotify=echo %%s | mail -s \"Safeminemore Core Alert\"" \
 			"admin@foo.com"
 		eerror ""
 		return 1

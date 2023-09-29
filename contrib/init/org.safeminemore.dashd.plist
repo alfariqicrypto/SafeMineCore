@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>org.safemine.safemined</string>
+	<string>org.safeminemore.safeminemored</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/local/bin/safemined</string>
+		<string>/usr/local/bin/safeminemored</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
